@@ -69,25 +69,3 @@ int file_exists(char* file_path){
 
     return result;
 }
-
-int is_valid_labyrinth_name(char* name){
-    if(name == NULL){
-        return 0;
-    }
-
-    size_t length = strlen(name);
-    if(length == 0 || length > MAX_LABYRINTH_NAME_LENGTH){
-        return 0;
-    }
-
-    for(size_t i = 0 ; length > i ; i++){
-        char c = name[i];
-        int is_allowed = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
-            || c == '_' || c == '-';
-        if(!is_allowed){
-            return 0;
-        }
-    }
-
-    return 1;
-}

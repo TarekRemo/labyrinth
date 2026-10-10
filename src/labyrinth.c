@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "labyrinth.h"
 
 Labyrinth* allocate_labyrinth(int difficulty, int height, int width){
@@ -54,6 +55,28 @@ int is_valid_labyrinth_params(Difficulty difficulty, int height, int width){
            height%2 == 1 && 
            width%2 == 1 &&
            (difficulty == EASY || difficulty == HARD);
+}
+
+int is_valid_labyrinth_name(char* name){
+    if(name == NULL){
+        return 0;
+    }
+
+    size_t length = strlen(name);
+    if(length == 0 || length > MAX_LABYRINTH_NAME_LENGTH){
+        return 0;
+    }
+
+    for(size_t i = 0 ; length > i ; i++){
+        char c = name[i];
+        int is_allowed = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+            || c == '_' || c == '-';
+        if(!is_allowed){
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
 char get_cell_representation(Cell content){

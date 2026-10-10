@@ -1,6 +1,8 @@
 #ifndef LABYRINTH_H
 #define LABYRINTH_H "labyrinth.h"
 
+#define MAX_LABYRINTH_NAME_LENGTH 50
+
 /**
  * Enum permettant de représenter une cellule du labyrinth
  * Une cellule peut être vide ou contenir un mur, une porte, une clé ou un piège
@@ -71,6 +73,18 @@ void free_labyrinth(Labyrinth* labyrinth);
  * @return 1 si les paramètres sont valides, 0 sinon.
  */
 int is_valid_labyrinth_params(Difficulty difficulty, int height, int width);
+
+/**
+ * Permet de vérifier qu'un nom de labyrinthe est valide.
+ * 
+ * Un nom valide est non vide, ne dépasse pas MAX_LABYRINTH_NAME_LENGTH caractères et ne contient
+ *  que des lettres non accentuées, des chiffres, '_' ou '-'.
+ * 
+ * @param name le nom à vérifier.
+ * 
+ * @return 1 si le nom est valide, 0 sinon.
+ */
+int is_valid_labyrinth_name(char* name);
 
 /**
  * Permet d'obtenir le caractère représentant le contenu d'une cellule.
