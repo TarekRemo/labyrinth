@@ -108,6 +108,6 @@ Cell get_cell(char c){
             return PLAYER;
 
         default:
-            return -1; //erreur
+            return UNKNOWN;
     }
 }

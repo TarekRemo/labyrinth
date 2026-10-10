@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/stat.h>
 #include "utils.h"
 
 int read_int(FILE* input_descriptor, int* var){
@@ -46,5 +47,47 @@ int read_int(FILE* input_descriptor, int* var){
     }
 
     *var = (int)value;
+    return 1;
+}
+
+int file_exists(char* file_path){
+    struct stat st = {0};
+    int result;
+    if (stat(file_path, &st) == -1) {
+        switch(errno){
+            case ENOENT: //Le fichier n'existe pas
+                result = 0;
+                break;
+            
+            default: //Une autre erreur signifie que le fichier existe
+                result = 1;
+                break;
+        }
+    }else{
+        result = 1; //pas d'erreur, donc le fichier existe
+    }
+
+    return result;
+}
+
+int is_valid_labyrinth_name(char* name){
+    if(name == NULL){
+        return 0;
+    }
+
+    size_t length = strlen(name);
+    if(length == 0 || length > MAX_LABYRINTH_NAME_LENGTH){
+        return 0;
+    }
+
+    for(size_t i = 0 ; length > i ; i++){
+        char c = name[i];
+        int is_allowed = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+            || c == '_' || c == '-';
+        if(!is_allowed){
+            return 0;
+        }
+    }
+
     return 1;
 }

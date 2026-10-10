@@ -4,7 +4,6 @@
 #include "labyrinth.h"
 
 #define SAVE_PATH "data/labyrinths/"
-#define MAX_LABYRINTH_NAME_LENGTH 50
 
 /**
  * Enum représentant l'état de retour des opérations d'enregistrement/chargement de labyrinthes
@@ -45,12 +44,12 @@ LabyrinthIOStatus save_labyrinth(char* name, Labyrinth* labyrinth);
  * Permet de charger un labyrinthe depuis un fichier cfg. Ce labyrinthe doit être présent dans le dossier SAVE_PATH.
  * 
  * @param name le nom du labyrinth à charger. Celui-ci doit être le même que celui du fichier cfg dans lequel le labyrinth est enregisré.
- * @param labyrinth pointeur vers Labyrinth qui contienadra les informations du labyrinthe chargé. 
+ * @param labyrinth pointeur vers le pointeur d'un Labyrinth qui contienadra le labyrinthe chargé. 
  *                  La mémoire occupée par cette variable sera allouée dynamiquement et donc il faut la libérer avec free_labyrinth().
  *                  Si le chargement échoue, la valeur de ce pointeur sera NULL
  * 
  * @return LabyrinthIOStatus un état représentant le résultat de l'opération de chargement. 
  */
-LabyrinthIOStatus load_labyrinth(char* name, Labyrinth* labyrinth);
+LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth);
 
 #endif

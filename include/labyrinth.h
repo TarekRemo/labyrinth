@@ -6,6 +6,7 @@
  * Une cellule peut être vide ou contenir un mur, une porte, une clé ou un piège
  */
 typedef enum Cell {
+    UNKNOWN,
     EMPTY,
     WALL,
     DOOR,
