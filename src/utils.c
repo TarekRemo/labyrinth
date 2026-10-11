@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <termio.h>
 #include <unistd.h>
 #include "utils.h"
@@ -59,6 +60,50 @@ int read_int(FILE* input_descriptor, int* var){
 
     *var = (int)value;
     return 1;
+}
+
+KeyboardKey read_entry(){
+    char c = getchar();
+
+    //Si c'est le caractère de la touche echap
+    if(c == 27){
+
+        // Vérifier si un autre caractère est disponible immédiatement
+        // (C'est le cas pour les touches des flèches)
+        fd_set set;
+        struct timeval timeout;
+        FD_ZERO(&set);
+        FD_SET(0, &set); // Entrée standard (stdin)
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 50000; // 50 ms
+        if (select(1, &set, NULL, NULL, &timeout) == 0) {
+            //aucun autre caractère = c'est la touche echape
+            return ESCAPE;
+        }
+
+        //D'autres caractères existent
+        getchar(); //ignorer le deuxième caractère
+        c = getchar(); //le 3ème permet de connaître la touche
+
+        if(c == 'A'){//flèche du haut
+            return UP;
+        } 
+        else if(c == 'B'){//flèche du bas
+            return DOWN;
+        }
+        else if(c == 'D'){//flèche de la gauche
+            return LEFT;
+        }
+        else if(c == 'C'){//flèche de la droite
+            return RIGHT;
+        }
+    }
+    
+    if(c == '\n'){
+        return ENTER;
+    }
+
+    return NONE;
 }
 
 int file_exists(char* file_path){
@@ -127,6 +172,8 @@ static char* get_color_ansi_code(Color color){
             return "200";
         case BLACK:
             return "0";
+        case RED:
+            return "9";
         default:
             return NULL;
     }

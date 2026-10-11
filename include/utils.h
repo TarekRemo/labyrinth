@@ -6,13 +6,30 @@
 #define READ_INT_BUFFER_SIZE 64
 #define COLOR_ANSI_CODE_BUFFER_SIZE 64
 
+/**
+ * Enum représentant les couleurs
+ */
 typedef enum Color{
     NONE,
     GRAY,
     GREEN,
     PINK,
-    BLACK
+    BLACK,
+    RED
 } Color;
+
+/**
+ * Enum représentant les touches clavier que l'utilisateur peut taper.
+ */
+typedef enum KeyboardKey{
+    NONE,
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    ESCAPE, 
+    ENTER
+} KeyboardKey;
 
 /**
  * Vérifie et lit un nombre entier depuis le descripteur input_descriptor et le stock dans var.
@@ -23,6 +40,13 @@ typedef enum Color{
  * @return 1 si l'opération est réussie, 0 sinon.
  */
 int read_int(FILE* input_descriptor, int* var);
+
+/**
+ * Lit un caractère depuis l'entrée standard et retourne la valeur de KeyboardKey correspondant.
+ * 
+ * @return l'élément de KeyboardKey correspondant au caractère entré. Si le caractère n'est pas reconnu, alors NONE est retourné.
+ */
+KeyboardKey read_entry(void);
 
 /**
  * Permet de vérifier si un fichier existe.
