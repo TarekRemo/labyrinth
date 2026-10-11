@@ -4,7 +4,18 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <termio.h>
+#include <unistd.h>
 #include "utils.h"
+
+/**
+ * permet d'obtenir le code ansi de la couleur souhaitée.
+ * 
+ * @param color la couleur souhaitée.
+ * 
+ * @return la code de la couleur. Si la couleur n'est pas reconnue, alors NULL est retourné.
+ */
+static char* get_color_ansi_code(Color color);
 
 int read_int(FILE* input_descriptor, int* var){
     if(input_descriptor == NULL || var == NULL){
@@ -68,4 +79,55 @@ int file_exists(char* file_path){
     }
 
     return result;
+}
+
+void set_background_color(Color color){
+    char* color_code = get_color_ansi_code(color);
+    printf("\033[48;5;%sm\033[2J\033[H", color_code);
+}
+
+void print_text(char* text, Color text_color, int underline, Color highlight_color, int bold){
+    char* text_color_code = get_color_ansi_code(text_color);
+    text_color_code = text_color_code != NULL ? text_color_code : "";
+
+    char* underline_code = underline == 1 ? "4" : "";
+
+    char* highlight_color_code = get_color_ansi_code(highlight_color);
+    highlight_color_code = highlight_color_code != NULL ? highlight_color_code : "";
+
+    char* bold_code = bold == 1 ? "1" : "";
+
+    printf(
+        "\033[%s;%s;38;5;%s;48;5;%sm%s\033[0m\n",
+        underline_code,
+        bold_code,
+        text_color_code,
+        highlight_color_code,
+        text
+    );
+}
+
+void set_canonical_mode(int canonical){
+    struct termios oldt; 
+    tcgetattr(STDIN_FILENO, &oldt); 
+    if(canonical == 0)
+        oldt.c_lflag &= ~(ICANON | ECHO); 
+    else if (canonical == 1)
+        oldt.c_lflag |= (ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+}
+
+static char* get_color_ansi_code(Color color){
+    switch(color){
+        case GRAY:
+            return "250";
+        case GREEN:
+            return "40";
+        case PINK:
+            return "200";
+        case BLACK:
+            return "0";
+        default:
+            return NULL;
+    }
 }
