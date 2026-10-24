@@ -10,7 +10,6 @@
  * Enum représentant les couleurs
  */
 typedef enum Color{
-    NONE,
     GRAY,
     GREEN,
     PINK,
@@ -27,9 +26,24 @@ typedef enum KeyboardKey{
     DOWN,
     LEFT,
     RIGHT,
-    ESCAPE, 
+    R, 
     ENTER
 } KeyboardKey;
+
+/**
+ * Enum représentant l'état de retour des opérations sur labyrinthes (génération, enregistrement, chargement, etc)
+ */
+typedef enum LabyrinthStatus{
+    LABYRINTH_SUCCESS,
+    LABYRINTH_PERMISSION_ERROR,
+    LABYRINTH_NOT_FOUND,
+    LABYRINTH_CORRUPTED,
+    LABYRINTH_INVALID_NAME,
+    LABYRINTH_INVALID_FORMAT,
+    LABYRINTH_ALREADY_EXISTS,
+    LABYRINTH_MEMORY_ERROR,
+    LABYRINTH_UNKNOWN
+}LabyrinthStatus;
 
 /**
  * Vérifie et lit un nombre entier depuis le descripteur input_descriptor et le stock dans var.

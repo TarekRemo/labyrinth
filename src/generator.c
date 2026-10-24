@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "utils.h"
 
 /**
  * Construit le labyrinthe dont la mémoire doit être déjà allouée par l'appellant.
@@ -33,33 +34,28 @@ static void free_cells_values(int** cells_values, int labyrinth_height);
  */
 static int all_cells_linked(int** cells_values, int labyrinth_height, int labyrinth_width);
 
-Labyrinth* generate_labyrinth(Difficulty difficulty, int height, int width){
+LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty, int height, int width){
 
     // Vérifier s'il faut utiliser les valeurs par défaut
     height = height <= 0 ? DEFAULT_LABYRINTH_HEIGHT : height;
     width = width <= 0 ? DEFAULT_LABYRINTH_WIDTH : width;
 
-    if(!is_valid_labyrinth_params(difficulty, height, width)){
-        fprintf(stderr, "La taille minimale du labyrinthe est de 3x3\n");
-        fprintf(stderr, "La hauteur et la largeur du labyrinthe doivent être impaires\n");
-        fprintf(stderr, "La difficulté %d choisie n'est pas reconnue\n", difficulty);
-        
-        return NULL;
+    if(!is_valid_labyrinth_params(difficulty, height, width)){ 
+        return LABYRINTH_CORRUPTED;       
     }
 
-    Labyrinth* labyrinth  = allocate_labyrinth(difficulty, height, width);
-    if(labyrinth == NULL){
-        fprintf(stderr, "Impossible d'allouer la mémoire nécessaire pour la génération du labyrinthe\n");
-        return NULL;
+    *labyrinth  = allocate_labyrinth(difficulty, height, width);
+    if(*labyrinth == NULL){
+        return LABYRINTH_MEMORY_ERROR;
     }
 
-    if(construct_labyrinth(labyrinth) == 0){
-        fprintf(stderr, "Impossible de construire le labyrinthe\n");
-        free_labyrinth(labyrinth);
-        return NULL; 
+    if(construct_labyrinth(*labyrinth) == 0){
+        free_labyrinth(*labyrinth);
+        *labyrinth = NULL;
+        return LABYRINTH_UNKNOWN;
     }
 
-    return labyrinth;
+    return LABYRINTH_SUCCESS;
 }
 
 int construct_labyrinth(Labyrinth* labyrinth){

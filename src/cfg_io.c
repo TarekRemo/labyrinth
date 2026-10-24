@@ -9,47 +9,44 @@
 /**
  * Permet de vérifier que le dossier de sauvegarde existe et est accessible, le crée sinon.
  * 
- * @return LABYRINTH_IO_SUCCESS si le dossier existe ou si sa création est réussie. 
+ * @return LABYRINTH_SUCCESS si le dossier existe ou si sa création est réussie. 
  */
-static LabyrinthIOStatus check_save_folder(void);
+static LabyrinthStatus check_save_folder(void);
 
-LabyrinthIOStatus save_labyrinth(char* name, Labyrinth* labyrinth){
+LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     if(labyrinth == NULL || labyrinth->cells == NULL){
-        return LABYRINTH_IO_CORRUPTED;
+        return LABYRINTH_CORRUPTED;
     }
 
     if(!is_valid_labyrinth_params(labyrinth->difficulty, labyrinth->height, labyrinth->width)){
-        return LABYRINTH_IO_CORRUPTED;
+        return LABYRINTH_CORRUPTED;
     }
 
     if(!is_valid_labyrinth_name(name)){
-        return LABYRINTH_IO_INVALID_NAME;
+        return LABYRINTH_INVALID_NAME;
     }
 
     //Vérifier que le dossier de sauvegarde existe
-    LabyrinthIOStatus save_folder_status = check_save_folder();
-    if(save_folder_status != LABYRINTH_IO_SUCCESS){
+    LabyrinthStatus save_folder_status = check_save_folder();
+    if(save_folder_status != LABYRINTH_SUCCESS){
         return save_folder_status;
     }
 
-    char* file_path = malloc(strlen(SAVE_PATH)+strlen(name)+5);
+    char* file_path = build_file_path(name);
     if(file_path == NULL){
-        return LABYRINTH_IO_UNKNOWN;
+        return LABYRINTH_UNKNOWN;
     }
-    strcpy(file_path, SAVE_PATH);
-    strcat(file_path, name);
-    strcat(file_path, ".cfg");
 
     //Vérifier qu'un labyrinthe avec ce nom n'existe pas déjà
     if(file_exists(file_path)){
         free(file_path);
-        return LABYRINTH_IO_ALREADY_EXISTS;
+        return LABYRINTH_ALREADY_EXISTS;
     }
 
     FILE* save_file = fopen(file_path, "w");
     if(save_file == NULL){
         free(file_path);
-        return LABYRINTH_IO_UNKNOWN;
+        return LABYRINTH_UNKNOWN;
     }
 
     /**
@@ -78,14 +75,14 @@ LabyrinthIOStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     free(file_path);
     fclose(save_file);
 
-    return LABYRINTH_IO_SUCCESS;
+    return LABYRINTH_SUCCESS;
 }
 
-LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
+LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
     *labyrinth = NULL;
 
     if(!is_valid_labyrinth_name(name)){
-        return LABYRINTH_IO_INVALID_NAME;
+        return LABYRINTH_INVALID_NAME;
     }
 
     char* file_path = malloc(strlen(SAVE_PATH) + strlen(name) + 5);
@@ -93,23 +90,23 @@ LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
     strcat(file_path, name);
     strcat(file_path, ".cfg");
 
-    if(check_save_folder() != LABYRINTH_IO_SUCCESS || !file_exists(file_path)){
+    if(check_save_folder() != LABYRINTH_SUCCESS || !file_exists(file_path)){
         free(file_path);
-        return LABYRINTH_IO_NOT_FOUND;
+        return LABYRINTH_NOT_FOUND;
     }
 
     FILE* save_file = fopen(file_path, "r");
     free(file_path); //on n'en a plus besoin
     if(save_file == NULL){
         fclose(save_file);
-        return LABYRINTH_IO_UNKNOWN;
+        return LABYRINTH_UNKNOWN;
     }
 
     //Ignorer la 1ère ligne contenant le nom
     char name_line[MAX_LABYRINTH_NAME_LENGTH + 2];   // nom + '\n' + '\0'
     if(fgets(name_line, sizeof(name_line), save_file) == NULL){
         fclose(save_file);
-        return LABYRINTH_IO_INVALID_FORMAT;
+        return LABYRINTH_INVALID_FORMAT;
     }
 
     int difficulty, height, width;
@@ -119,18 +116,18 @@ LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
         !read_int(save_file, &width) 
     ){
         fclose(save_file);
-        return LABYRINTH_IO_INVALID_FORMAT;
+        return LABYRINTH_INVALID_FORMAT;
     }
 
     if(!is_valid_labyrinth_params(difficulty, height, width)){
         fclose(save_file);
-        return LABYRINTH_IO_CORRUPTED;
+        return LABYRINTH_CORRUPTED;
     }
 
     *labyrinth = allocate_labyrinth(difficulty, height, width);
     if(*labyrinth == NULL){
         fclose(save_file);
-        return LABYRINTH_IO_MEMORY_ERROR;
+        return LABYRINTH_MEMORY_ERROR;
     }
 
     char c;
@@ -144,7 +141,7 @@ LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
                 free_labyrinth(*labyrinth);
                 *labyrinth = NULL;
                 fclose(save_file);
-                return LABYRINTH_IO_INVALID_FORMAT;
+                return LABYRINTH_INVALID_FORMAT;
             }
 
             (*labyrinth)->cells[line][col] = content;
@@ -158,7 +155,7 @@ LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
                 free_labyrinth(*labyrinth);
                 *labyrinth = NULL;
                 fclose(save_file);
-                return LABYRINTH_IO_INVALID_FORMAT;
+                return LABYRINTH_INVALID_FORMAT;
             }
         }
         //fin de fichier ou retour à la ligne obligatoire pour la dernière ligne
@@ -167,36 +164,48 @@ LabyrinthIOStatus load_labyrinth(char* name, Labyrinth** labyrinth){
                 free_labyrinth(*labyrinth);
                 *labyrinth = NULL;
                 fclose(save_file);
-                return LABYRINTH_IO_INVALID_FORMAT;
+                return LABYRINTH_INVALID_FORMAT;
             }
         }
     }
 
-    return LABYRINTH_IO_SUCCESS;
+    return LABYRINTH_SUCCESS;
 }
 
-static LabyrinthIOStatus check_save_folder(void){
+char* build_file_path(char* labyrinth_name){
+    char* file_path = malloc(strlen(SAVE_PATH)+strlen(labyrinth_name)+5);
+    if(file_path == NULL){
+        return NULL;
+    }
+    strcpy(file_path, SAVE_PATH);
+    strcat(file_path, labyrinth_name);
+    strcat(file_path, ".cfg");
+
+    return file_path;
+}
+
+static LabyrinthStatus check_save_folder(void){
     struct stat st = {0};   
     if (stat(SAVE_PATH, &st) == -1) {
         switch(errno){
             case ENOENT: //Le dossier n'existe pas, faut le créer
                 if(mkdir(SAVE_PATH, 0700) == -1){
-                    return errno == EACCES ? LABYRINTH_IO_PERMISSION_ERROR : LABYRINTH_IO_UNKNOWN;
+                    return errno == EACCES ? LABYRINTH_PERMISSION_ERROR : LABYRINTH_UNKNOWN;
                 }
-                return LABYRINTH_IO_SUCCESS;
+                return LABYRINTH_SUCCESS;
             
             case EACCES: //erreur de permission
-                return LABYRINTH_IO_PERMISSION_ERROR;
+                return LABYRINTH_PERMISSION_ERROR;
             
             default: //autres erreurs
-                return LABYRINTH_IO_UNKNOWN;
+                return LABYRINTH_UNKNOWN;
         }
     }
 
     //véifier que c'est un répértoire et non pas un fichier
     if(!S_ISDIR(st.st_mode)){
-        return LABYRINTH_IO_INVALID_FORMAT; 
+        return LABYRINTH_INVALID_FORMAT; 
     }
 
-    return LABYRINTH_IO_SUCCESS;
+    return LABYRINTH_SUCCESS;
 }
