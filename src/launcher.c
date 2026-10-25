@@ -25,16 +25,21 @@ char* success_msg;
 static MenuChoice show_menu(void);
 
 /**
- * Affiche les différents choix possibles du menu sur la sortie standard.
+ * Affiche une liste de choix sur la sortie standard.
  * 
+ * Chaque choix est représenté par son indice dans le tableau choices_list.
  * Le choix selectionné par current_choice est surligné. 
- * Si aucun labyrinthe n'est chargé en mémoire (loaded_labyrinth = NULL), alors le choix de jouer est désactivé.
+ * Les choix désactivés présents dans le tableau disabled_choices seront affichés avec une couleur différente indiquant cela.
  * 
- * @param current_choice le choix sélectionné.
+ * @param choices_list la liste des choix à afficher
+ * @param nb_choices le nombre de choix à afficher
+ * @param current_choice le choix sélectionné
+ * @param nb_disabled_choices le nombre de choix désactivés
+ * @param disabled_choices la liste des choix désactivés
  * 
  * @return void
  */
-static void print_menu_choices(MenuChoice current_choice);
+static void print_choices(char** choices_list, int nb_choices, int current_choice, int nb_disabled_choices, int* disabled_choices);
 
 /**
  * Demande à l'utilisateur d'entrer les informations du labyrinthe à créer
@@ -84,8 +89,17 @@ void launch(){
 MenuChoice show_menu(void){
     set_canonical_mode(0);
 
-    //Choix par défaut = jouer si un labyrinthe est chargé, créer un labyrinthe sinon
-    MenuChoice current_choice = loaded_labyrinth != NULL ? PLAY : CREATE_LABYRINTH;
+    int labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
+    MenuChoice current_choice = labyrinth_is_loaded ? PLAY : CREATE_LABYRINTH;
+
+    char* menu_choices[] = {
+        "Jouer",
+        "Créer un labyrinthe",
+        "Charger un labyrinth",
+        "Quitter"
+    };
+
+    int disabled_choices[] = {0};
 
     KeyboardKey key;
     int modifier = 0;
@@ -112,18 +126,19 @@ MenuChoice show_menu(void){
             );
         }
 
-        print_menu_choices(current_choice);
+        labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
+        print_choices(menu_choices, 4, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
 
         //On attend une entrée reconnue
         while((key=read_entry()) == NONE || key == LEFT || key == RIGHT);
 
         if(key == UP || key == DOWN){
-            modifier = key == UP ? 1 : -1;
+            modifier = key == UP ? -1 : 1;
 
-            if(current_choice == PLAY && modifier == 1){
+            if(current_choice == PLAY && modifier == -1){
                 current_choice = QUIT;
             }
-            else if(current_choice == QUIT && modifier == -1){
+            else if(current_choice == QUIT && modifier == 1){
                 current_choice = PLAY;
             }
             else{
@@ -144,40 +159,6 @@ MenuChoice show_menu(void){
             return RETURN;
         }
     }
-}
-
-static void print_menu_choices(MenuChoice current_choice){
-    print_text(
-        "Jouer",
-        loaded_labyrinth != NULL ? MENU_CHOICE_COLOR : MENU_DISABLED_CHOICE_COLOR,
-        0,
-        current_choice == PLAY ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-        1
-    );
-
-    print_text(
-        "Créer un labyrinthe",
-        MENU_CHOICE_COLOR,
-        0,
-        current_choice == CREATE_LABYRINTH ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-        1
-    );
-    
-    print_text(
-        "Charger un labyrinth",
-        MENU_CHOICE_COLOR,
-        0,
-        current_choice == LOAD_LABYRINTH ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-        1
-    );    
-
-    print_text(
-        "Quitter",
-        MENU_CHOICE_COLOR,
-        0,
-        current_choice == QUIT ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-        1
-    );    
 }
 
 static void create_labyrinth(){
@@ -301,27 +282,18 @@ static void create_labyrinth(){
 
 static Difficulty read_labyrinth_difficulty(){
     set_canonical_mode(0);
+
+    char* difficulty_choices[] = {
+        "Facile",
+        "Difficile"
+    };
+    
     Difficulty difficulty = EASY;
     KeyboardKey key;
     while(1){
         set_background_color(MENU_BACKGROUND_COLOR);
 
-        print_text(
-            "Facile",
-            MENU_CHOICE_COLOR,
-            0,
-            difficulty == EASY ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-            1
-        );
-
-        print_text(
-            
-            "Difficile",
-            MENU_CHOICE_COLOR,
-            0,
-            difficulty == HARD ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
-            1
-        );
+        print_choices(difficulty_choices, 2, difficulty, 0, NULL);
 
         //On attend une entrée reconnue
         while((key=read_entry()) == NONE || key == LEFT || key == RIGHT || key == R);
@@ -342,5 +314,29 @@ static void quit(int exit_code){
     free(error_msg);
     free(success_msg);
     exit(exit_code);
+}
+
+static void print_choices(char** choices_list, int nb_choices, int current_choice, int nb_disabled_choices, int* disabled_choices){
+    if(choices_list == NULL){
+        return;
+    }
+
+    int disabled;
+    for(int i = 0 ; i < nb_choices ; i++){
+        if(nb_disabled_choices > 0 && int_array_contains(i, nb_disabled_choices, disabled_choices)){
+            disabled = 1;
+        }
+        else{
+            disabled = 0;
+        }
+
+        print_text(
+            choices_list[i],
+            disabled ? MENU_DISABLED_CHOICE_COLOR : MENU_CHOICE_COLOR,
+            0,
+            current_choice == i ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
+            1
+        );
+    }  
 }
 

@@ -15,10 +15,10 @@
  * Enum représentant les différents choix possibles dans le menu du jeu.
  */
 typedef enum MenuChoice {
-    QUIT,
-    LOAD_LABYRINTH,
-    CREATE_LABYRINTH,
     PLAY,
+    CREATE_LABYRINTH,
+    LOAD_LABYRINTH,
+    QUIT,
     RETURN
 } MenuChoice;
 

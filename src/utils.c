@@ -153,6 +153,14 @@ void set_canonical_mode(int canonical){
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
 
+int int_array_contains(int value, int array_size, int* array){
+    for(int i = 0 ; i < array_size ; i++){
+        if(array[i] == value)
+            return 1;
+    }
+    return 0;
+}
+
 static char* get_color_ansi_code(Color color){
     switch(color){
         case GRAY:

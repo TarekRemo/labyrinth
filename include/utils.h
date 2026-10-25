@@ -107,4 +107,15 @@ void print_text(char* text, Color text_color, int underline, Color highlight_col
  */
 void set_canonical_mode(int canonical);
 
+/**
+ * Permet de vérifier si un tableau d'entier contient un caractère.
+ * 
+ * @param value la valeur à rechercher
+ * @param array_size la taille du tableau array
+ * @param array le tableau dans lequel il faut chercher
+ * 
+ * @return 1 si la valeur est présente, 0 sinon.
+ */
+int int_array_contains(int value, int array_size, int* array);
+
 #endif

@@ -91,7 +91,7 @@ int is_valid_labyrinth_name(char* name);
  * 
  * @param content le contenu de la cellule.
  * 
- * @return le caractère représentant graphiquement cette cellule.
+ * @return le caractère représentant cette cellule.
  */
 char get_cell_representation(Cell content);
 
