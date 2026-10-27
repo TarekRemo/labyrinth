@@ -1,17 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include <string.h>
 #include "cfg_io.h"
 #include "utils.h"
-
-/**
- * Permet de vérifier que le dossier de sauvegarde existe et est accessible, le crée sinon.
- * 
- * @return LABYRINTH_SUCCESS si le dossier existe ou si sa création est réussie. 
- */
-static LabyrinthStatus check_save_folder(void);
 
 LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     if(labyrinth == NULL || labyrinth->cells == NULL){
@@ -26,10 +17,20 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
         return LABYRINTH_INVALID_NAME;
     }
 
-    //Vérifier que le dossier de sauvegarde existe
-    LabyrinthStatus save_folder_status = check_save_folder();
-    if(save_folder_status != LABYRINTH_SUCCESS){
-        return save_folder_status;
+    LabyrinthStatus file_exists_status = file_exists(SAVE_PATH, 1);
+    switch(file_exists_status){
+        case LABYRINTH_SUCCESS:
+            break;
+
+        case LABYRINTH_NOT_FOUND:
+            LabyrinthStatus folder_creation_status = create_folder(SAVE_PATH); 
+            if(folder_creation_status != LABYRINTH_SUCCESS){
+                return folder_creation_status;
+            }
+            break;
+
+        default:
+            return file_exists_status;
     }
 
     char* file_path = build_file_path(name);
@@ -38,7 +39,7 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     }
 
     //Vérifier qu'un labyrinthe avec ce nom n'existe pas déjà
-    if(file_exists(file_path)){
+    if( (file_exists_status = file_exists(file_path, 0)) == LABYRINTH_SUCCESS || file_exists_status == LABYRINTH_PERMISSION_ERROR){
         free(file_path);
         return LABYRINTH_ALREADY_EXISTS;
     }
@@ -90,9 +91,10 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
     strcat(file_path, name);
     strcat(file_path, ".cfg");
 
-    if(check_save_folder() != LABYRINTH_SUCCESS || !file_exists(file_path)){
+    LabyrinthStatus file_exists_status = file_exists(file_path, 0);
+    if(file_exists_status != LABYRINTH_SUCCESS){
         free(file_path);
-        return LABYRINTH_NOT_FOUND;
+        return file_exists_status;
     }
 
     FILE* save_file = fopen(file_path, "r");
@@ -182,30 +184,4 @@ char* build_file_path(char* labyrinth_name){
     strcat(file_path, ".cfg");
 
     return file_path;
-}
-
-static LabyrinthStatus check_save_folder(void){
-    struct stat st = {0};   
-    if (stat(SAVE_PATH, &st) == -1) {
-        switch(errno){
-            case ENOENT: //Le dossier n'existe pas, faut le créer
-                if(mkdir(SAVE_PATH, 0700) == -1){
-                    return errno == EACCES ? LABYRINTH_PERMISSION_ERROR : LABYRINTH_UNKNOWN;
-                }
-                return LABYRINTH_SUCCESS;
-            
-            case EACCES: //erreur de permission
-                return LABYRINTH_PERMISSION_ERROR;
-            
-            default: //autres erreurs
-                return LABYRINTH_UNKNOWN;
-        }
-    }
-
-    //véifier que c'est un répértoire et non pas un fichier
-    if(!S_ISDIR(st.st_mode)){
-        return LABYRINTH_INVALID_FORMAT; 
-    }
-
-    return LABYRINTH_SUCCESS;
 }

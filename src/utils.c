@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <termio.h>
 #include <unistd.h>
 #include "utils.h"
@@ -96,24 +97,97 @@ KeyboardKey read_entry(){
     return NONE;
 }
 
-int file_exists(char* file_path){
-    struct stat st = {0};
-    int result;
-    if (stat(file_path, &st) == -1) {
+LabyrinthStatus file_exists(char* folder_path, int is_folder){
+    struct stat st = {0};   
+    if (stat(folder_path, &st) == -1) {
         switch(errno){
             case ENOENT: //Le fichier n'existe pas
-                result = 0;
-                break;
+                return LABYRINTH_NOT_FOUND;
             
-            default: //Une autre erreur signifie que le fichier existe
-                result = 1;
-                break;
+            case EACCES: //erreur de permission
+                return LABYRINTH_PERMISSION_ERROR;
+            
+            default: //autres erreurs
+                return LABYRINTH_UNKNOWN;
         }
-    }else{
-        result = 1; //pas d'erreur, donc le fichier existe
     }
 
-    return result;
+    //véifier que c'est le type attendu
+    int expected_type = is_folder == S_ISDIR(st.st_mode);
+
+    return expected_type == 1 ? LABYRINTH_SUCCESS : LABYRINTH_NOT_FOUND;
+}
+
+LabyrinthStatus create_folder(char* folder_path){
+    if(mkdir(folder_path, 0700) == -1){
+        switch(errno){
+            case EACCES:
+                return LABYRINTH_PERMISSION_ERROR;
+            
+            case EEXIST:
+                return LABYRINTH_ALREADY_EXISTS;
+
+            default:
+                return LABYRINTH_UNKNOWN;
+        }
+    }
+    return LABYRINTH_SUCCESS;
+}
+
+char** get_folder_content(char* folder_path){   
+    DIR* folder;
+    struct dirent* file_struct;
+
+    folder = opendir (folder_path);
+    if(folder == NULL){
+        return NULL;
+    }
+
+    int nb_files = 0;
+    char** files_array = NULL;
+    char** temp = NULL;
+    while ((file_struct = readdir(folder))){
+        nb_files++;
+
+        temp = realloc(files_array, sizeof(char*) * nb_files);
+        if(temp == NULL){
+            if(nb_files > 1){    
+                for(int i = 0 ; i < nb_files-1 ; i++){
+                    free(files_array[i]);
+                }
+                free(files_array);
+            }
+            return NULL;
+        }
+
+        files_array = temp;
+
+        files_array[nb_files-1] = malloc(sizeof(file_struct->d_name));
+        if(files_array[nb_files-1] == NULL){
+            for(int i = 0 ; i < nb_files-1 ; i++){
+                free(files_array[i]);
+            }
+            free(files_array);
+            return NULL;
+        }
+
+        strcpy(files_array[nb_files-1], file_struct->d_name);
+    }
+
+    //ajouter une dernière case NULL indiquant la fin de la liste
+    temp = realloc(files_array, sizeof(char*) * nb_files+1);
+    if(temp == NULL){   
+        for(int i = 0 ; i < nb_files ; i++){
+            free(files_array[i]);
+        }
+        free(files_array);
+        return NULL;
+    }
+
+    files_array = temp;
+    files_array[nb_files] = NULL;
+    
+    return files_array;
 }
 
 void set_background_color(Color color){
