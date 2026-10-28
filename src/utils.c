@@ -175,7 +175,7 @@ char** get_folder_content(char* folder_path){
     }
 
     //ajouter une dernière case NULL indiquant la fin de la liste
-    temp = realloc(files_array, sizeof(char*) * nb_files+1);
+    temp = realloc(files_array, sizeof(char*) * (nb_files+1));
     if(temp == NULL){   
         for(int i = 0 ; i < nb_files ; i++){
             free(files_array[i]);
