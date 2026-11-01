@@ -3,6 +3,7 @@
 
 #include "labyrinth.h"
 #include "utils.h"
+#include "game.h"
 
 #define MENU_BACKGROUND_COLOR BLACK
 #define MENU_CHOICE_COLOR PINK
@@ -10,6 +11,7 @@
 #define MENU_SELECTED_CHOICE_COLOR GREEN
 #define MENU_ERROR_TEXT_COLOR RED
 #define MENU_SUCCESS_TEXT_COLOR GREEN
+#define MENU_GAME_RESULT_TEXT_COLOR PURPLE
 
 /**
  * Enum représentant les différents choix possibles dans le menu du jeu.
@@ -37,10 +39,15 @@ extern char* error_msg;
  * Si la valeur de ce pointeur n'est pas null, 
  * alors il contient un message de réussite à afficher dans le menu.
  */
-extern char* success_msg; 
+extern char* success_msg;
 
 /**
- * Lance le jeu.
+ * Etat de la partie en cours
+ */
+extern GAMESTATUS current_game_status;
+
+/**
+ * Lance le menu du jeu.
  * 
  * @return void
  */

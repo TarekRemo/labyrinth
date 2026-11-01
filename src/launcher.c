@@ -1,16 +1,17 @@
 #include <stdlib.h>
+#include <string.h>
 #include "launcher.h"
 #include "generator.h"
 #include "cfg_io.h"
-#include "labyrinth.h"
-#include "string.h"
 
 #define MAX_MENU_MSG_LENGTH 150
 
 Labyrinth* loaded_labyrinth;
 
 char* error_msg;
-char* success_msg; 
+char* success_msg;
+
+GAMESTATUS current_game_status;
 
 /**
  * Affiche le menu du jeu et attend que l'utilisateur selectionne un choix du menu.
@@ -40,6 +41,13 @@ static MenuChoice show_menu(void);
  * @return void
  */
 static void print_choices(char** choices_list, int nb_choices, int current_choice, int nb_disabled_choices, int* disabled_choices);
+
+/**
+ * Permet de lancer une partie avec le labyrinthe chargé dans loaded_laburinth.
+ * 
+ * @return void
+ */
+static void play(void);
 
 /**
  * Demande à l'utilisateur d'entrer les informations du labyrinthe à créer
@@ -96,8 +104,13 @@ void launch(){
         choice = show_menu();
         error_msg = NULL;
         success_msg = NULL;
+        current_game_status = NOT_STARTED;
 
         switch(choice){
+            case PLAY:
+                play();
+                break;
+
             case CREATE_LABYRINTH:
                 create_labyrinth();
                 break;
@@ -117,17 +130,30 @@ void launch(){
 
 MenuChoice show_menu(void){
     set_canonical_mode(0);
-
-    int labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
-    MenuChoice current_choice = labyrinth_is_loaded ? PLAY : CREATE_LABYRINTH;
-
-    char* menu_choices[] = {
+    
+    char menu_choices[4][32] = {
         "Jouer",
         "Créer un labyrinthe",
         "Charger un labyrinth",
         "Quitter"
     };
+    char* menu_choice_ptrs[4] = {
+        menu_choices[0],
+        menu_choices[1],
+        menu_choices[2],
+        menu_choices[3]
+    };
 
+    if(current_game_status == NOT_FINISHED){
+        strcpy(menu_choices[0], "Reprendre");
+    }
+    else if(current_game_status == WON || current_game_status == LOST){
+        free_labyrinth(loaded_labyrinth);
+        loaded_labyrinth = NULL;
+    }
+
+    int labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
+    MenuChoice current_choice = labyrinth_is_loaded ? PLAY : CREATE_LABYRINTH;
     int disabled_choices[] = {0};
 
     KeyboardKey key;
@@ -155,8 +181,27 @@ MenuChoice show_menu(void){
             );
         }
 
+        if(current_game_status == WON){
+            print_text(
+                "\nBRAVO! Vous avez gagné la partie\n",
+                MENU_GAME_RESULT_TEXT_COLOR,
+                0,
+                MENU_BACKGROUND_COLOR,
+                1
+            );
+        }
+        else if(current_game_status == LOST){
+            print_text(
+                "\nDommage! Vous avez perdu la partie\n",
+                MENU_GAME_RESULT_TEXT_COLOR,
+                0,
+                MENU_BACKGROUND_COLOR,
+                1
+            );
+        }
+
         labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
-        print_choices(menu_choices, 4, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
+        print_choices(menu_choice_ptrs, 4, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
 
         //On attend une entrée reconnue
         while((key=read_entry()) == NONE || key == LEFT || key == RIGHT);
@@ -190,11 +235,21 @@ MenuChoice show_menu(void){
     }
 }
 
+static void play(){
+    if(loaded_labyrinth == NULL){
+        error_msg = "Aucun labyrinthe n'est chargé en mémoire pour jouer";
+        return;
+    }
+
+    current_game_status = launch_game(loaded_labyrinth);
+}
+
 static void create_labyrinth(){
     if(loaded_labyrinth != NULL){
         free(loaded_labyrinth);
         loaded_labyrinth = NULL;
     }
+    current_game_status = NOT_STARTED;
 
     set_background_color(MENU_BACKGROUND_COLOR);
     set_canonical_mode(1);
@@ -354,7 +409,6 @@ static void choose_labyrinth(void){
     char** labyrinths_list = NULL;
     char** temp = NULL;
     for(int i = 0 ; folder_files[i] != NULL ; i++){
-        printf("fichier %s\n", folder_files[i]);
         //on recherche l'extension
         extension_start = strrchr(folder_files[i], '.');
         if(extension_start == NULL){ // pas d'extension = pas de .cfg
@@ -379,7 +433,6 @@ static void choose_labyrinth(void){
             error_msg = "Erreur d'allocation de mémoire lors de la lecture du dossier de sauvegarde";
             return;
         }
-        printf("après allocation de tmp avec l'indice %d\n", i);
 
         labyrinths_list = temp;
 
@@ -401,12 +454,9 @@ static void choose_labyrinth(void){
         labyrinths_list[nb_labyrinths][name_length] = '\0';
         free(folder_files[i]);
         
-        printf("après copie et libération de string avec l'indice %d\n", i);
         nb_labyrinths++;
     }
     free(folder_files);
-    printf("après libération de folder_files\n");
-
     int user_choice = show_labyrinths_list(labyrinths_list, nb_labyrinths);
 
     if(user_choice == -1){ //Si l'utilisateur veut retourner en arrière
@@ -418,6 +468,7 @@ static void choose_labyrinth(void){
         free(loaded_labyrinth);
         loaded_labyrinth = NULL;
     }
+    current_game_status = NOT_STARTED;
 
     LabyrinthStatus labyrinth_load_status = load_labyrinth(labyrinths_list[user_choice], &loaded_labyrinth);
     switch(labyrinth_load_status){

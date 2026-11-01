@@ -18,12 +18,13 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     }
 
     LabyrinthStatus file_exists_status = file_exists(SAVE_PATH, 1);
+    LabyrinthStatus folder_creation_status;
     switch(file_exists_status){
         case LABYRINTH_SUCCESS:
             break;
 
         case LABYRINTH_NOT_FOUND:
-            LabyrinthStatus folder_creation_status = create_folder(SAVE_PATH); 
+            folder_creation_status = create_folder(SAVE_PATH); 
             if(folder_creation_status != LABYRINTH_SUCCESS){
                 return folder_creation_status;
             }
