@@ -17,9 +17,9 @@ typedef enum Color{
     RED,
     PURPLE,
     YELLOW,
-    TURQUOISE,
+    BLUE,
     BROWN,
-    LIGHT_GREEN,
+    GRAY_GREEN,
     DARK_GREEN
 } Color;
 
@@ -116,10 +116,11 @@ void set_background_color(Color color);
  * @param underline 1 s'il faut souligner, 0 sinon.
  * @param highlight_color couleur de surlignage.
  * @param bold 1 pour afficher en gras, 0 sinon.
+ * @param width la largeur du text.
  * 
  * @return void
  */
-void print_text(char* text, Color text_color, int underline, Color highlight_color, int bold);
+void print_text(char* text, Color text_color, int underline, Color highlight_color, int bold, int width);
 
 /**
  * Permet d'afficher un texte en appliquant un style spécifique sans retour à la ligne.
@@ -129,10 +130,11 @@ void print_text(char* text, Color text_color, int underline, Color highlight_col
  * @param underline 1 s'il faut souligner, 0 sinon.
  * @param highlight_color couleur de surlignage.
  * @param bold 1 pour afficher en gras, 0 sinon.
+ * @param width la largeur du text.
  *
  * @return void
  */
-void print_text_inline(char* text, Color text_color, int underline, Color highlight_color, int bold);
+void print_text_inline(char* text, Color text_color, int underline, Color highlight_color, int bold, int width);
 
 /**
  * Configure le mode d'entrée du terminal pour le descripteur de l'entrée standard.

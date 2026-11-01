@@ -128,31 +128,31 @@ static void print_labyrinth(Labyrinth labyrinth){
                     break;
 
                 case DOOR:
-                    strcpy(cell_representation, "_");
+                    strcpy(cell_representation, " | ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_DOOR_COLOR;
                     break;
 
                 case KEY:
-                    strcpy(cell_representation, "^");
+                    strcpy(cell_representation, " ^ ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_KEY_COLOR;
                     break;
 
                 case TREASURE:
-                    strcpy(cell_representation, "$");
+                    strcpy(cell_representation, " $ ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_TREASURE_COLOR;
                     break;
 
                 case TRAP:
-                    strcpy(cell_representation, "X");
+                    strcpy(cell_representation, " X ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_TRAP_COLOR;
                     break;
 
                 case PLAYER:
-                    strcpy(cell_representation, "O");
+                    strcpy(cell_representation, " O ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_PLAYER_COLOR;
                     break;
@@ -169,7 +169,8 @@ static void print_labyrinth(Labyrinth labyrinth){
                 cell_content_color,
                 0,
                 cell_back_ground_color,
-                0
+                1,
+                cell_content == WALL || cell_content == EMPTY ? 3  : 1
             );
         }
         printf("\n");

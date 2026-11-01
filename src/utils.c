@@ -190,7 +190,7 @@ char** get_folder_content(char* folder_path){
     return files_array;
 }
 
-static void print_text_formatted(char* text, Color text_color, int underline, Color highlight_color, int bold, int newline){
+static void print_text_formatted(char* text, Color text_color, int underline, Color highlight_color, int bold, int newline, int width){
     char* text_color_code = get_color_ansi_code(text_color);
     text_color_code = text_color_code != NULL ? text_color_code : "";
 
@@ -203,27 +203,33 @@ static void print_text_formatted(char* text, Color text_color, int underline, Co
 
     fprintf(
         stdout,
-        "\033[%s;%s;38;5;%s;48;5;%sm%s\033[0m%s",
+        "\033[%s;%s;38;5;%s;48;5;%sm%*s\033[0m%s",
         underline_code,
         bold_code,
         text_color_code,
         highlight_color_code,
+        width,
         text,
         newline ? "\n" : ""
     );
 }
 
 void set_background_color(Color color){
-    char* color_code = get_color_ansi_code(color);
-    printf("\033[48;5;%sm\033[2J\033[H", color_code);
+    const char* color_code = get_color_ansi_code(color);
+    if(color_code == NULL){
+        color_code = "0";
+    }
+
+    printf("\033[H\033[2J\033[3J\033[0m\033[48;5;%sm", color_code);
+    fflush(stdout);
 }
 
-void print_text(char* text, Color text_color, int underline, Color highlight_color, int bold){
-    print_text_formatted(text, text_color, underline, highlight_color, bold, 1);
+void print_text(char* text, Color text_color, int underline, Color highlight_color, int bold, int width){
+    print_text_formatted(text, text_color, underline, highlight_color, bold, 1, width);
 }
 
-void print_text_inline(char* text, Color text_color, int underline, Color highlight_color, int bold){
-    print_text_formatted(text, text_color, underline, highlight_color, bold, 0);
+void print_text_inline(char* text, Color text_color, int underline, Color highlight_color, int bold, int width){
+    print_text_formatted(text, text_color, underline, highlight_color, bold, 0, width);
 }
 
 void set_canonical_mode(int canonical){
@@ -260,12 +266,12 @@ static char* get_color_ansi_code(Color color){
             return "165";
         case YELLOW:
             return "226";
-        case TURQUOISE:
-            return "51";
+        case BLUE:
+            return "20";
         case BROWN:
             return "94";
-        case LIGHT_GREEN:
-            return "78";
+        case GRAY_GREEN:
+            return "188";
         case DARK_GREEN:
             return "70";
         default:

@@ -167,6 +167,7 @@ MenuChoice show_menu(void){
                 MENU_ERROR_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
+                1,
                 1
             );
         }
@@ -177,6 +178,7 @@ MenuChoice show_menu(void){
                 MENU_SUCCESS_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
+                1,
                 1
             );
         }
@@ -187,6 +189,7 @@ MenuChoice show_menu(void){
                 MENU_GAME_RESULT_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
+                1,
                 1
             );
         }
@@ -196,6 +199,7 @@ MenuChoice show_menu(void){
                 MENU_GAME_RESULT_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
+                1,
                 1
             );
         }
@@ -260,6 +264,7 @@ static void create_labyrinth(){
         MENU_CHOICE_COLOR,
         0,
         MENU_BACKGROUND_COLOR,
+        1,
         1
     );
     
@@ -273,6 +278,7 @@ static void create_labyrinth(){
             MENU_ERROR_TEXT_COLOR,
             0,
             MENU_BACKGROUND_COLOR,
+            1,
             1
         );
         char c;
@@ -289,6 +295,7 @@ static void create_labyrinth(){
         MENU_CHOICE_COLOR,
         0,
         MENU_BACKGROUND_COLOR,
+        1,
         1
     );
 
@@ -302,6 +309,7 @@ static void create_labyrinth(){
             MENU_ERROR_TEXT_COLOR,
             0,
             MENU_BACKGROUND_COLOR,
+            1,
             1
         );
     }
@@ -571,6 +579,7 @@ static void print_choices(char** choices_list, int nb_choices, int current_choic
             disabled ? MENU_DISABLED_CHOICE_COLOR : MENU_CHOICE_COLOR,
             0,
             current_choice == i ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
+            1,
             1
         );
     }  
