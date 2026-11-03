@@ -208,33 +208,43 @@ MenuChoice show_menu(void){
         print_choices(menu_choice_ptrs, 4, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
 
         //On attend une entrée reconnue
-        while((key=read_entry()) == NONE || key == LEFT || key == RIGHT);
+        while(
+            (key=read_entry()) == NONE ||
+            key == LEFT || key == RIGHT ||
+            key == Q || key == D
+        );
 
-        if(key == UP || key == DOWN){
-            modifier = key == UP ? -1 : 1;
+        switch(key){
+            case UP:
+            case DOWN:
+            case Z:
+            case S:
+                modifier = (key == UP || key == Z) ? -1 : 1;
+                if(current_choice == PLAY && modifier == -1){
+                    current_choice = QUIT;
+                }
+                else if(current_choice == QUIT && modifier == 1){
+                    current_choice = PLAY;
+                }
+                else{
+                    current_choice += modifier;
+                }
 
-            if(current_choice == PLAY && modifier == -1){
-                current_choice = QUIT;
-            }
-            else if(current_choice == QUIT && modifier == 1){
-                current_choice = PLAY;
-            }
-            else{
-                current_choice += modifier;
-            }
+                //Impossible de jouer si aucun labyrinthe n'est chargé
+                if(loaded_labyrinth == NULL && current_choice == PLAY){
+                    current_choice = CREATE_LABYRINTH;
+                }
+                continue;
 
-            //Impossible de jouer si aucun labyrinthe n'est chargé
-            if(loaded_labyrinth == NULL && current_choice == PLAY){
-                current_choice = CREATE_LABYRINTH;
-            }
-            continue;
-        }
-        else if (key == ENTER){
-            set_background_color(MENU_BACKGROUND_COLOR);
-            return current_choice;
-        }
-        else if(key == R){
-            return RETURN;
+            case ENTER:
+                set_background_color(MENU_BACKGROUND_COLOR);
+                return current_choice;
+
+            case R:
+                return RETURN;
+
+            default:
+                continue;
         }
     }
 }
@@ -388,14 +398,27 @@ static Difficulty read_labyrinth_difficulty(){
         print_choices(difficulty_choices, 2, difficulty, 0, NULL);
 
         //On attend une entrée reconnue
-        while((key=read_entry()) == NONE || key == LEFT || key == RIGHT || key == R);
+        while(
+            (key=read_entry()) == NONE ||
+            key == LEFT || key == RIGHT ||
+            key == Q || key == D ||
+            key == R
+        );
 
-        if(key == UP || key == DOWN){//flèche du haut
-            difficulty = difficulty == EASY ? HARD : EASY;
-        }
-        else if (key == ENTER){
-            set_background_color(MENU_BACKGROUND_COLOR);
-            return difficulty;
+        switch(key){
+            case UP:
+            case DOWN:
+            case Z:
+            case S:
+                difficulty = difficulty == EASY ? HARD : EASY;
+                break;
+
+            case ENTER:
+                set_background_color(MENU_BACKGROUND_COLOR);
+                return difficulty;
+
+            default:
+                continue;
         }
     }
 }
@@ -528,7 +551,11 @@ static int show_labyrinths_list(char** labyrinths_list, int nb_labyrinths){
         set_background_color(MENU_BACKGROUND_COLOR);
         print_choices(labyrinths_list, nb_labyrinths, current_choice, 0, NULL);
 
-        while((key = read_entry()) == LEFT || key == RIGHT ||key == NONE);
+        while(
+            (key = read_entry()) == LEFT ||
+            key == RIGHT || key == D ||
+            key == NONE || key == Q
+        );
 
         switch(key){
             case ENTER:

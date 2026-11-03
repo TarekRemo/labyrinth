@@ -32,6 +32,10 @@ typedef enum KeyboardKey{
     DOWN,
     LEFT,
     RIGHT,
+    Z,
+    S,
+    Q,
+    D,
     R, 
     ENTER
 } KeyboardKey;

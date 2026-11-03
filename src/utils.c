@@ -86,8 +86,24 @@ KeyboardKey read_entry(){
             }
             break;
         
+        case 'z':
+        case 'Z':
+            return Z;
 
+        case 's':
+        case 'S':
+            return S;
+
+        case 'q':
+        case 'Q':
+            return Q;
+
+        case 'd':
+        case 'D':
+            return D;
+        
         case 'r':
+        case 'R':
             return R;
         
         case '\n':

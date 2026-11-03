@@ -63,18 +63,22 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
         new_player_col = player_col;
         switch(key){
             case UP:
+            case Z:
                 new_player_line = player_line-1;
                 break;
 
             case DOWN:
+            case S:
                 new_player_line = player_line+1;
                 break;
 
             case LEFT:
+            case Q:
                 new_player_col = player_col-1;
                 break;
             
             case RIGHT:
+            case D:
                 new_player_col = player_col+1;
                 break;
             
