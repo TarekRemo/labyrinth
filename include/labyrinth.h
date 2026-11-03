@@ -38,6 +38,7 @@ typedef struct Labyrinth {
     int width;
     Difficulty difficulty;
     Cell** cells;
+    int door_unlocked;
 } Labyrinth;
 
 /**
@@ -45,6 +46,8 @@ typedef struct Labyrinth {
  * 
  * La mémoire est allouée dynamiquement et doit donc être libérér manuellement
  *  en utilisant free_labyrinth().
+ * 
+ * Le champs door_unlocked du labyrinthe est mis à 0 par défaut.
  * 
  * @param difficulty la difficulté du labyrinthe 
  * @param height la hauteur du labyrinthe 

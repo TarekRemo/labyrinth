@@ -34,6 +34,7 @@ Labyrinth* allocate_labyrinth(int difficulty, int height, int width){
     labyrinth->height = height;
     labyrinth->width = width;
     labyrinth->difficulty = difficulty;
+    labyrinth->door_unlocked = 0;
 
     return labyrinth;
 }

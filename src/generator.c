@@ -34,6 +34,15 @@ static void free_cells_values(int** cells_values, int labyrinth_height);
  */
 static int all_cells_linked(int** cells_values, int labyrinth_height, int labyrinth_width);
 
+/**
+ * Ajoute les objets aléatoires (clé, pièges, trésores) au labyrinthe
+ * 
+ * @param labyrinth pointeur vers le labyrinthe
+ * 
+ * @return void
+ */
+static void add_random_objects(Labyrinth* labyrinth);
+
 LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty, int height, int width){
 
     // Vérifier s'il faut utiliser les valeurs par défaut
@@ -54,6 +63,8 @@ LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty,
         *labyrinth = NULL;
         return LABYRINTH_UNKNOWN;
     }
+
+    add_random_objects(*labyrinth);
 
     return LABYRINTH_SUCCESS;
 }
@@ -183,4 +194,38 @@ static int all_cells_linked(int** cells_values, int labyrinth_height, int labyri
     }
 
     return 1;
+}
+
+static void add_random_objects(Labyrinth* labyrinth){
+    int height = labyrinth->height;
+    int width = labyrinth->width;
+
+    int random_line;
+    int random_col;
+
+    do{
+        random_line = rand()%height;
+        random_col = rand()%width;
+    }while(labyrinth->cells[random_line][random_col] != EMPTY);
+    labyrinth->cells[random_line][random_col] = KEY;
+
+    int nb_traps_to_add = (height*width)*0.03; 
+    while(nb_traps_to_add > 0){
+        do{
+            random_line = rand()%height;
+            random_col = rand()%width;
+        }while(labyrinth->cells[random_line][random_col] != EMPTY);
+        labyrinth->cells[random_line][random_col] = TRAP;
+        nb_traps_to_add--;
+    }
+
+    int nb_treasures_to_add = (height*width)*0.02; 
+    while(nb_treasures_to_add > 0){
+        do{
+            random_line = rand()%height;
+            random_col = rand()%width;
+        }while(labyrinth->cells[random_line][random_col] != EMPTY);
+        labyrinth->cells[random_line][random_col] = TREASURE;
+        nb_treasures_to_add--;
+    }
 }

@@ -92,8 +92,16 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
         if(player_can_go_to(labyrinth, new_player_line, new_player_col) == 1){
             labyrinth->cells[player_line][player_col] = EMPTY;
 
-            if(labyrinth->cells[new_player_line][new_player_col] == DOOR){
-                return WON;
+            switch(labyrinth->cells[new_player_line][new_player_col]){
+                case DOOR:
+                    return WON;
+                
+                case KEY:
+                    labyrinth->door_unlocked = 1;
+                    break;
+                
+                default:
+                    break;
             }
 
             labyrinth->cells[new_player_line][new_player_col] = PLAYER;
@@ -132,13 +140,13 @@ static void print_labyrinth(Labyrinth labyrinth){
                     break;
 
                 case DOOR:
-                    strcpy(cell_representation, " _ ");
+                    strcpy(cell_representation, labyrinth.door_unlocked == 1 ? " _ " : " # ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_DOOR_COLOR;
                     break;
 
                 case KEY:
-                    strcpy(cell_representation, " ^ ");
+                    strcpy(cell_representation, " % ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_KEY_COLOR;
                     break;
@@ -200,7 +208,8 @@ static int player_can_go_to(Labyrinth* labyrinth, int new_line, int new_col){
     if(
         new_line < 0 || new_line >= labyrinth->height ||
         new_col < 0  || new_col >= labyrinth->width ||
-        labyrinth->cells[new_line][new_col] == WALL
+        labyrinth->cells[new_line][new_col] == WALL ||
+        (labyrinth->cells[new_line][new_col] == DOOR && labyrinth->door_unlocked == 0 )
     ){
         return 0;
     }
