@@ -115,7 +115,7 @@ Cell get_cell(char c){
         case '#':
             return WALL;
 
-        case '|':
+        case '_':
             return DOOR;
 
         case '^':

@@ -465,6 +465,12 @@ static void choose_labyrinth(void){
         nb_labyrinths++;
     }
     free(folder_files);
+
+    if(nb_labyrinths == 0){
+        error_msg = "Aucun labyrinthe n'a encore été sauvegardé";
+        return;
+    }
+    
     int user_choice = show_labyrinths_list(labyrinths_list, nb_labyrinths);
 
     if(user_choice == -1){ //Si l'utilisateur veut retourner en arrière

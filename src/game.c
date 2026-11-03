@@ -128,7 +128,7 @@ static void print_labyrinth(Labyrinth labyrinth){
                     break;
 
                 case DOOR:
-                    strcpy(cell_representation, " | ");
+                    strcpy(cell_representation, " _ ");
                     cell_back_ground_color = GAME_BACKGROUND_COLOR;
                     cell_content_color = GAME_DOOR_COLOR;
                     break;

@@ -147,6 +147,9 @@ char** get_folder_content(char* folder_path){
     char** files_array = NULL;
     char** temp = NULL;
     while ((file_struct = readdir(folder))){
+        if(strcmp(file_struct->d_name, ".") == 0 || strcmp(file_struct->d_name, "..") == 0){
+            continue;
+        }
         nb_files++;
 
         temp = realloc(files_array, sizeof(char*) * nb_files);
@@ -273,7 +276,7 @@ static char* get_color_ansi_code(Color color){
         case GRAY_GREEN:
             return "188";
         case DARK_GREEN:
-            return "70";
+            return "22";
         default:
             return NULL;
     }
