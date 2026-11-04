@@ -97,14 +97,14 @@ void launch(){
     error_msg = malloc(MAX_MENU_MSG_LENGTH);
     success_msg = malloc(MAX_MENU_MSG_LENGTH);
 
+    current_game_status = NOT_STARTED;
     loaded_labyrinth = NULL;
-    MenuChoice choice;
 
+    MenuChoice choice;
     while(1){
         choice = show_menu();
         error_msg = NULL;
         success_msg = NULL;
-        current_game_status = NOT_STARTED;
 
         switch(choice){
             case PLAY:
@@ -254,8 +254,18 @@ static void play(){
         error_msg = "Aucun labyrinthe n'est chargé en mémoire pour jouer";
         return;
     }
+    
+    //Temps écoulé depuis le début de la partie
+    static long int elapsed_time;
+    //score actuel
+    static long int score;
 
-    current_game_status = launch_game(loaded_labyrinth);
+    if(current_game_status == NOT_STARTED){ //réinitialisation en début de partie
+        elapsed_time = 0;
+        score = 0;
+    }
+
+    current_game_status = launch_game(loaded_labyrinth, &elapsed_time, &score);
 }
 
 static void create_labyrinth(){
@@ -565,10 +575,12 @@ static int show_labyrinths_list(char** labyrinths_list, int nb_labyrinths){
                 return -1;
 
             case UP:
+            case Z:
                 current_choice--;
                 break;
             
             case DOWN:
+            case S:
                 current_choice++;
                 break;
 

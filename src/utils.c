@@ -269,6 +269,10 @@ int int_array_contains(int value, int array_size, int* array){
     return 0;
 }
 
+long int max(long int a, long int b){
+    return a > b ? a : b;
+}
+
 static char* get_color_ansi_code(Color color){
     switch(color){
         case GRAY:

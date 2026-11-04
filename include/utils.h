@@ -164,4 +164,14 @@ void set_canonical_mode(int canonical);
  */
 int int_array_contains(int value, int array_size, int* array);
 
+/**
+ * Retourne le max entre a et b
+ * 
+ * @param a première valeur
+ * @param b deuxième valeur
+ * 
+ * @return la valeur la plus grande entre a et b
+ */
+long int max(long int a, long int b);
+
 #endif

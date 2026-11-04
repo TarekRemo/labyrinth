@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "game.h"
 #include "utils.h"
 
@@ -10,7 +11,7 @@
  * 
  * @return void
  */
-static void print_labyrinth(Labyrinth labyrinth);
+static void print_labyrinth(Labyrinth labyrinth, long int current_score);
 
 /**
  * Retourne les coordonnées du joueur
@@ -35,7 +36,7 @@ static void find_player_coordinates(Labyrinth labyrinth, int coordinates[2]);
  */
 static int player_can_go_to(Labyrinth* labyrinth, int new_line, int new_col);
 
-GAMESTATUS launch_game(Labyrinth* labyrinth){
+GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* current_score){
     if(labyrinth == NULL ||labyrinth->cells == NULL){
         return NOT_STARTED;
     }
@@ -53,8 +54,10 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
     int player_col = player_coordinates[1];
     int new_player_line;
     int new_player_col;
+
+    int start_time = time(NULL);
     while(1){
-        print_labyrinth(*labyrinth);
+        print_labyrinth(*labyrinth, *current_score);
  
         //on attend une entrée valide
         while((key = read_entry()) == ENTER || key == NONE);
@@ -83,6 +86,8 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
                 break;
             
             case R:
+                //arrêter le chrono
+                *elapsed_time += time(NULL)-start_time;
                 return NOT_FINISHED;
 
             default:
@@ -94,10 +99,22 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
 
             switch(labyrinth->cells[new_player_line][new_player_col]){
                 case DOOR:
+                    *elapsed_time += time(NULL)-start_time;
+                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_SEC * (*elapsed_time));
                     return WON;
                 
                 case KEY:
+                    *elapsed_time += time(NULL)-start_time;
                     labyrinth->door_unlocked = 1;
+                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_SEC * (*elapsed_time));
+                    break;
+
+                case TREASURE:
+                    *current_score += GAME_TREASURE_BONUS;
+                    break;
+
+                case TRAP:
+                    *current_score = max(0, *current_score - GAME_TRAP_PENALTY);
                     break;
                 
                 default:
@@ -111,7 +128,7 @@ GAMESTATUS launch_game(Labyrinth* labyrinth){
     }
 }
 
-static void print_labyrinth(Labyrinth labyrinth){
+static void print_labyrinth(Labyrinth labyrinth, long int current_score){
     set_background_color(GAME_BACKGROUND_COLOR);
 
     int height = labyrinth.height;
@@ -185,6 +202,13 @@ static void print_labyrinth(Labyrinth labyrinth){
                 cell_content == WALL || cell_content == EMPTY ? 3  : 1
             );
         }
+
+        if(line == 0){
+            char score_string[40];
+            sprintf(score_string, "Score : %ld", current_score);
+            print_text_inline(score_string, PINK, 1, BLACK, 1, 3);
+        }
+
         printf("\n");
     }
 }
