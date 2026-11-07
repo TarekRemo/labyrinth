@@ -19,8 +19,7 @@
 typedef enum GAMESTATUS{
     NOT_STARTED,
     NOT_FINISHED,
-    WON,
-    LOST
+    WON
 } GAMESTATUS;
 
 /**
@@ -30,7 +29,7 @@ typedef enum GAMESTATUS{
  * @param elapsed_time le temps écoulé depuis le début de la prtie
  * @param current_score score actuel
  * 
- * @return l'état de la partie (NOT_STARTED, NOT_FINISHED, WON, LOST)
+ * @return l'état de la partie (NOT_STARTED, NOT_FINISHED, WON)
  */
 GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* current_score);
 

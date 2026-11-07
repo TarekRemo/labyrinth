@@ -13,6 +13,8 @@ char* success_msg;
 
 GAMESTATUS current_game_status;
 
+long int score;
+
 /**
  * Affiche le menu du jeu et attend que l'utilisateur selectionne un choix du menu.
  * 
@@ -147,7 +149,7 @@ MenuChoice show_menu(void){
     if(current_game_status == NOT_FINISHED){
         strcpy(menu_choices[0], "Reprendre");
     }
-    else if(current_game_status == WON || current_game_status == LOST){
+    else if(current_game_status == WON){
         free_labyrinth(loaded_labyrinth);
         loaded_labyrinth = NULL;
     }
@@ -183,9 +185,11 @@ MenuChoice show_menu(void){
             );
         }
 
+        char score_msg[60];
         if(current_game_status == WON){
+            sprintf(score_msg, "\nBRAVO! Vous avez gagné la partie.\nVotre score final est %ld", score);
             print_text(
-                "\nBRAVO! Vous avez gagné la partie\n",
+                score_msg,
                 MENU_GAME_RESULT_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
@@ -193,9 +197,10 @@ MenuChoice show_menu(void){
                 1
             );
         }
-        else if(current_game_status == LOST){
+        else if (current_game_status == NOT_FINISHED){
+            sprintf(score_msg, "\nVotre score actuel est %ld", score);
             print_text(
-                "\nDommage! Vous avez perdu la partie\n",
+                score_msg,
                 MENU_GAME_RESULT_TEXT_COLOR,
                 0,
                 MENU_BACKGROUND_COLOR,
@@ -257,8 +262,6 @@ static void play(){
     
     //Temps écoulé depuis le début de la partie
     static long int elapsed_time;
-    //score actuel
-    static long int score;
 
     if(current_game_status == NOT_STARTED){ //réinitialisation en début de partie
         elapsed_time = 0;

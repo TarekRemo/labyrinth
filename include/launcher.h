@@ -46,6 +46,11 @@ extern char* success_msg;
  */
 extern GAMESTATUS current_game_status;
 
+/*
+ * Score du joueur
+ */
+extern long int score;
+
 /**
  * Lance le menu du jeu.
  * 
