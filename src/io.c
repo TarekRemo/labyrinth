@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cfg_io.h"
+#include "io.h"
 #include "utils.h"
 
 LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
@@ -17,14 +17,14 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
         return LABYRINTH_INVALID_NAME;
     }
 
-    LabyrinthStatus file_exists_status = file_exists(SAVE_PATH, 1);
+    LabyrinthStatus file_exists_status = file_exists(LABYRINTHS_SAVE_PATH, 1);
     LabyrinthStatus folder_creation_status;
     switch(file_exists_status){
         case LABYRINTH_SUCCESS:
             break;
 
         case LABYRINTH_NOT_FOUND:
-            folder_creation_status = create_folder(SAVE_PATH); 
+            folder_creation_status = create_folder(LABYRINTHS_SAVE_PATH); 
             if(folder_creation_status != LABYRINTH_SUCCESS){
                 return folder_creation_status;
             }
@@ -34,7 +34,7 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
             return file_exists_status;
     }
 
-    char* file_path = build_file_path(name);
+    char* file_path = build_save_file_path(name, 1);
     if(file_path == NULL){
         return LABYRINTH_UNKNOWN;
     }
@@ -87,8 +87,8 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
         return LABYRINTH_INVALID_NAME;
     }
 
-    char* file_path = malloc(strlen(SAVE_PATH) + strlen(name) + 5);
-    strcpy(file_path, SAVE_PATH); 
+    char* file_path = malloc(strlen(LABYRINTHS_SAVE_PATH) + strlen(name) + 5);
+    strcpy(file_path, LABYRINTHS_SAVE_PATH); 
     strcat(file_path, name);
     strcat(file_path, ".cfg");
 
@@ -175,12 +175,17 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
     return LABYRINTH_SUCCESS;
 }
 
-char* build_file_path(char* labyrinth_name){
-    char* file_path = malloc(strlen(SAVE_PATH)+strlen(labyrinth_name)+5);
+char* build_save_file_path(char* labyrinth_name, int save_type){
+    char* save_path = save_type == 1 ? LABYRINTHS_SAVE_PATH  : (save_type == 2 ? SCORES_SAVE_PATH : NULL);
+    if(save_path == NULL){
+        return NULL;
+    }
+
+    char* file_path = malloc(strlen(save_path)+strlen(labyrinth_name)+5);
     if(file_path == NULL){
         return NULL;
     }
-    strcpy(file_path, SAVE_PATH);
+    strcpy(file_path, save_path);
     strcat(file_path, labyrinth_name);
     strcat(file_path, ".cfg");
 

@@ -2,7 +2,7 @@
 #include <string.h>
 #include "launcher.h"
 #include "generator.h"
-#include "cfg_io.h"
+#include "io.h"
 
 #define MAX_MENU_MSG_LENGTH 150
 
@@ -437,12 +437,12 @@ static Difficulty read_labyrinth_difficulty(){
 }
 
 static void choose_labyrinth(void){
-    if(file_exists(SAVE_PATH, 1) != LABYRINTH_SUCCESS){
+    if(file_exists(LABYRINTHS_SAVE_PATH, 1) != LABYRINTH_SUCCESS){
         error_msg = "Le dossier de sauvegarde n'est pas accessible ou n'existe pas";
         return;
     }
 
-    char** folder_files = get_folder_content(SAVE_PATH);
+    char** folder_files = get_folder_content(LABYRINTHS_SAVE_PATH);
     if(folder_files == NULL){
         error_msg = "Impossible de lire le contenu du dossier de sauvegarde";
         return;

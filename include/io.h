@@ -1,13 +1,14 @@
-#ifndef CFG_IO_H
-#define CFG_IO_H "cfg_io.h"
+#ifndef IO_H
+#define IO_H "io.h"
 
 #include "labyrinth.h"
 #include "utils.h"
 
-#define SAVE_PATH "data/labyrinths/"
+#define LABYRINTHS_SAVE_PATH "data/labyrinths/"
+#define SCORES_SAVE_PATH "data/scores/"
 
 /**
- * Enregistre un labyrinthe dans un fichier .cfg dans le dossier SAVE_PATH.
+ * Enregistre un labyrinthe dans un fichier .cfg dans le dossier LABYRINTHS_SAVE_PATH.
  * Si un labyrinthe avec le même nom existe déjà, la sauvegarde échoue. 
  * 
  * 
@@ -27,7 +28,7 @@
 LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth);
 
 /**
- * Permet de charger un labyrinthe depuis un fichier cfg. Ce labyrinthe doit être présent dans le dossier SAVE_PATH.
+ * Permet de charger un labyrinthe depuis un fichier cfg. Ce labyrinthe doit être présent dans le dossier LABYRINTHS_SAVE_PATH.
  * 
  * @param name le nom du labyrinth à charger. Celui-ci doit être le même que celui du fichier cfg dans lequel le labyrinth est enregisré.
  * @param labyrinth pointeur vers le pointeur d'un Labyrinth qui contienadra le labyrinthe chargé. 
@@ -46,15 +47,17 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth);
 LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth);
 
 /**
- * Permet de construire une chaîne de caractères contenant le chemin vers le fichier de sauvegarde 
- * d'un labyrinthe.
+ * Permet de construire une chaîne de caractères contenant le chemin vers un fichier de sauvegarde.
  * 
  * La chaîne de caractères retournée est allouée dynamiquement avec malloc et doit donc être liberé avec free().
  * 
  * @param labyrinth_name le nom dy labyrinthe
+ * @param save_type le type de fichier de sauvegarde : 
+ *  1 = fichier de sauvegarde de labyrinthes
+ *  2 = fichier de sauvegarde de scores
  * 
  * @return le chemin vers le fichier de sauvegarde ou nul si l'allocation de la mémoire échoue.
  */
-char* build_file_path(char* labyrinth_name);
+char* build_save_file_path(char* labyrinth_name, int save_type);
 
 #endif
