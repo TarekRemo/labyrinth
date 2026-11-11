@@ -7,6 +7,8 @@
 #define LABYRINTHS_SAVE_PATH "data/labyrinths/"
 #define SCORES_SAVE_PATH "data/scores/"
 
+#define MAX_PLAYER_NAME_LENGTH 128
+
 /**
  * Enregistre un labyrinthe dans un fichier .cfg dans le dossier LABYRINTHS_SAVE_PATH.
  * Si un labyrinthe avec le même nom existe déjà, la sauvegarde échoue. 
@@ -45,6 +47,10 @@ LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth);
  *  - LABYRINTH_UNKNOWN si l'opération échoue pour d'autres raisons 
  */
 LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth);
+
+LabyrinthStatus save_score(char* labyrinth_name, char* player_name, long int score);
+
+LabyrinthStatus load_scores(char* labyrinth_name, long int scores[10], char* player_names[10]);
 
 /**
  * Permet de construire une chaîne de caractères contenant le chemin vers un fichier de sauvegarde.

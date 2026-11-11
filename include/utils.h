@@ -45,6 +45,7 @@ typedef enum KeyboardKey{
  */
 typedef enum LabyrinthStatus{
     LABYRINTH_SUCCESS,
+    LABYRINTH_NO_CHANGE,
     LABYRINTH_PERMISSION_ERROR,
     LABYRINTH_NOT_FOUND,
     LABYRINTH_CORRUPTED,
