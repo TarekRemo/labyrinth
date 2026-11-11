@@ -1,11 +1,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <errno.h>
 #include "io.h"
 #include "utils.h"
 
-static void sort_scores_array(long int scores[10], char* player_names[10]);
-static int push_score(long int score, long int existing_scores[10]);
+/**
+ * Vérifie qu'un nom de joueur est non vide, ne dépasse pas la longueur maximale
+ * et ne contient aucun espace.
+ *
+ * @param player_name le nom à vérifier.
+ *
+ * @return 1 si le nom est valide, 0 sinon.
+ */
+static int is_valid_player_name(const char* player_name);
+
+/**
+ * Analyse une ligne de score et extrait le nom du joueur et son score.
+ *
+ * @param line la ligne contenant un nom suivi d'un score positif.
+ * @param player_name le tampon qui recevra le nom extrait; il doit pouvoir
+ *        contenir MAX_PLAYER_NAME_LENGTH + 1 caractères.
+ * @param score le pointeur qui recevra le score extrait.
+ *
+ * @return LABYRINTH_SUCCESS si la ligne est valide, LABYRINTH_INVALID_FORMAT sinon.
+ */
+static LabyrinthStatus parse_score_line(char* line, char* player_name, long int* score);
+
+/**
+ * Trie les scores par ordre décroissant en conservant l'association entre
+ * chaque score et le nom du joueur correspondant.
+ *
+ * @param scores tableau de MAX_SCORES scores, les cases inutilisées valant -1.
+ * @param player_names noms associés aux scores.
+ *
+ * @return void
+ */
+static void sort_scores_array(
+    long int scores[MAX_SCORES],
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1]
+);
+
+/**
+ * Insère un score à sa place dans le classement, en écartant le dernier score
+ * si le tableau est déjà complet.
+ *
+ * @param score le score à insérer.
+ * @param scores tableau de MAX_SCORES scores déjà classés par ordre décroissant.
+ * @param player_names noms associés aux scores.
+ * @param player_name le nom du joueur associé au nouveau score.
+ *
+ * @return l'indice d'insertion, ou -1 si le score ne rentre pas dans le classement.
+ */
+static int push_score(
+    long int score,
+    long int scores[MAX_SCORES],
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1],
+    const char* player_name
+);
 
 LabyrinthStatus save_labyrinth(char* name, Labyrinth* labyrinth){
     if(labyrinth == NULL || labyrinth->cells == NULL){
@@ -179,91 +232,80 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
 }
 
 LabyrinthStatus save_score(char* labyrinth_name, char* player_name, long int score){
-    if(!is_valid_labyrinth_name(labyrinth_name) || strlen(player_name) > MAX_PLAYER_NAME_LENGTH){
+    if(!is_valid_labyrinth_name(labyrinth_name)){
         return LABYRINTH_INVALID_NAME;
     }
 
-    if(labyrinth_name == NULL || score <= 0){
+    if(!is_valid_player_name(player_name)){
+        return LABYRINTH_INVALID_NAME;
+    }
+
+    if(score <= 0){
         return LABYRINTH_INVALID_FORMAT;
     }
 
-    long int existing_scores[10];
-    char* existing_player_names[10];
-    for(int i = 0 ; i < 10 ; i++){
-        existing_player_names[i] = malloc(sizeof(char) * MAX_PLAYER_NAME_LENGTH);
-        if(existing_player_names[i] == NULL){
-            for(int j = 0 ; j < i ; j++){
-                free(existing_player_names[j]);
-            }
-            return LABYRINTH_MEMORY_ERROR;
-        }
+    long int existing_scores[MAX_SCORES];
+    char existing_player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1];
+    LabyrinthStatus status = load_scores(labyrinth_name, existing_scores, existing_player_names);
+    if(status != LABYRINTH_SUCCESS && status != LABYRINTH_NOT_FOUND){
+        return status;
     }
 
-    LabyrinthStatus existing_scores_status = load_scores(labyrinth_name, existing_scores, existing_player_names);
-    if(existing_scores_status == LABYRINTH_NOT_FOUND){
-        existing_scores[0] = score;
-        strcpy(existing_player_names[0], player_name);
-
-        for(int i = 1 ; i < 10 ; i++){
-            existing_scores[i] = -1;
-            existing_player_names[i] = NULL;
-        }
+    if(push_score(score, existing_scores, existing_player_names, player_name) == -1){
+        return LABYRINTH_NO_CHANGE;
     }
-    else if(existing_scores_status == LABYRINTH_SUCCESS){
-        sort_scores_array(existing_scores, existing_player_names);
 
-        int new_score_index = push_score(score, existing_scores);
-        if(new_score_index == -1){
-            for(int i = 0 ; i < 10 ; i++){
-                free(existing_player_names[i]);
-            }
-            return LABYRINTH_NO_CHANGE;
-        }
-
-        strcpy(existing_player_names[new_score_index], player_name);
+    status = file_exists(SCORES_SAVE_PATH, 1);
+    if(status == LABYRINTH_NOT_FOUND){
+        status = create_folder(SCORES_SAVE_PATH);
     }
-    else{
-        return existing_scores_status;
+    if(status != LABYRINTH_SUCCESS){
+        return status;
     }
 
     char* file_path = build_save_file_path(labyrinth_name, 2);
     if(file_path == NULL){
-        for(int i = 0 ; i < 10 ; i++){
-            free(existing_player_names[i]);
-        }
-        return LABYRINTH_UNKNOWN;
+        return LABYRINTH_MEMORY_ERROR;
     }
 
     FILE* save_file = fopen(file_path, "w");
     free(file_path);
     if(save_file == NULL){
-        for(int i = 0 ; i < 10 ; i++){
-            free(existing_player_names[i]);
-        }
         return LABYRINTH_UNKNOWN;
     }
 
-    for(int i = 0 ; existing_scores[i] != -1 ; i++){
-        fprintf(save_file, "%s %ld\n", existing_player_names[i], existing_scores[i]);
-        free(existing_player_names[i]);
+    int write_failed = 0;
+    for(int i = 0 ; i < MAX_SCORES && existing_scores[i] != -1 ; i++){
+        if(fprintf(save_file, "%s %ld\n", existing_player_names[i], existing_scores[i]) < 0){
+            write_failed = 1;
+            break;
+        }
     }
 
-    fclose(save_file);
-    return LABYRINTH_SUCCESS;
+    if(fclose(save_file) != 0){
+        write_failed = 1;
+    }
+    return write_failed ? LABYRINTH_UNKNOWN : LABYRINTH_SUCCESS;
 }
 
-/**
- * Permet d'obtenir la liste des scores enregistrés pour un labyrinthe.
- * 
- * @param labyrinth_name le nom du labyrinthe
- * @param scores tableau qui contiendra les scores
- * @param player_names tableau qui contiendra les noms des joueurs de chaque score dans scores.
- * 
- * @return l'état de l'opération      
- */
-LabyrinthStatus load_scores(char* labyrinth_name, long int scores[10], char* player_names[10]){
+LabyrinthStatus load_scores(
+    char* labyrinth_name,
+    long int scores[MAX_SCORES],
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1]
+){
     if(!is_valid_labyrinth_name(labyrinth_name) || scores == NULL || player_names == NULL){
         return LABYRINTH_INVALID_FORMAT;
+    }
+
+    for(int i = 0 ; i < MAX_SCORES ; i++){
+        scores[i] = -1;
+        player_names[i][0] = '\0';
+    }
+
+    long int loaded_scores[MAX_SCORES];
+    char loaded_player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1] = {{0}};
+    for(int i = 0 ; i < MAX_SCORES ; i++){
+        loaded_scores[i] = -1;
     }
 
     char* file_path = build_save_file_path(labyrinth_name, 2);
@@ -272,72 +314,46 @@ LabyrinthStatus load_scores(char* labyrinth_name, long int scores[10], char* pla
     }
 
     LabyrinthStatus file_exists_status = file_exists(file_path, 0);
-    switch(file_exists_status){
-        case LABYRINTH_SUCCESS:
-            break;
-        
-        default:
-            return file_exists_status;
+    if(file_exists_status != LABYRINTH_SUCCESS){
+        free(file_path);
+        return file_exists_status;
     }
 
     FILE* file = fopen(file_path, "r");
     free(file_path);
     if(file == NULL){
-        return LABYRINTH_MEMORY_ERROR;
+        return LABYRINTH_UNKNOWN;
     }
 
-    char score_str[30];
-    char player_name[MAX_PLAYER_NAME_LENGTH];
-    char* end_ptr; 
-    long int score;
-    int line = 0;
-    int fscanf_result;
-    while(1){
-        if(line == 10){
-            fclose(file);
-            return LABYRINTH_SUCCESS;
+    char line[MAX_PLAYER_NAME_LENGTH + 32];
+    LabyrinthStatus status = LABYRINTH_SUCCESS;
+    int count = 0;
+    while(count < MAX_SCORES && fgets(line, sizeof(line), file) != NULL){
+        if(strchr(line, '\n') == NULL && !feof(file)){
+            status = LABYRINTH_INVALID_FORMAT;
+            break;
         }
-        
-        fscanf_result = fscanf(file, "%s", player_name);
-        if(fscanf_result != 1){
-            fclose(file);
-            //fin de fichier avant de récupérer un nom = succès
-            if(fscanf_result == EOF){
-                for(int i = 9 ; i >= line ; i--){
-                    scores[i] = -1; //pour indiquer le nombre de scores récupérés
-                    player_names[i] = NULL;
-                }
-                return LABYRINTH_SUCCESS;
-            }
-
-            return LABYRINTH_INVALID_FORMAT;
+        status = parse_score_line(line, loaded_player_names[count], &loaded_scores[count]);
+        if(status != LABYRINTH_SUCCESS){
+            break;
         }
-        if(strchr(player_name, '\0') == NULL){
-            fclose(file);
-            return LABYRINTH_INVALID_FORMAT;
-        }
-
-        fscanf_result = fscanf(file, "%s", score_str);
-        if(fscanf_result != 1){
-            fclose(file);
-            //nom existe mais pas de score = erreur
-            return LABYRINTH_INVALID_FORMAT;
-        }
-        if(strchr(score_str, '\0') == NULL){
-            fclose(file);
-            return LABYRINTH_INVALID_FORMAT;
-        }
-
-        score = strtol(score_str, &end_ptr, 10);
-        if(end_ptr != NULL){ //contient des lettres
-            fclose(file);
-            return LABYRINTH_INVALID_FORMAT;
-        }
-
-        scores[line] = score;
-        strcpy(player_names[line], player_name);
-        line++;
+        count++;
     }
+
+    if(ferror(file)){
+        status = LABYRINTH_UNKNOWN;
+    }
+    if(fclose(file) != 0 && status == LABYRINTH_SUCCESS){
+        status = LABYRINTH_UNKNOWN;
+    }
+    if(status != LABYRINTH_SUCCESS){
+        return status;
+    }
+
+    sort_scores_array(loaded_scores, loaded_player_names);
+    memcpy(scores, loaded_scores, sizeof(loaded_scores));
+    memcpy(player_names, loaded_player_names, sizeof(loaded_player_names));
+    return LABYRINTH_SUCCESS;
 }
 
 char* build_save_file_path(char* labyrinth_name, int save_type){
@@ -357,46 +373,108 @@ char* build_save_file_path(char* labyrinth_name, int save_type){
     return file_path;
 }
 
-static void sort_scores_array(long int scores[10], char* player_names[10]){
-    int temp;
-    char* temp_name;
-    for (int i = 0; i < 9; ++i){
-        for (int j = 0; j < (9 - i); ++j ){
-            if (scores[j] > scores[j+1]){
-                temp = scores[j+1];
-                temp_name = player_names[j+1];
+static int is_valid_player_name(const char* player_name){
+    if(player_name == NULL || player_name[0] == '\0'){
+        return 0;
+    }
 
-                scores[j+1] = scores[j];
-                player_names[j+1] = player_names[j];
-
-                scores[j] = temp;
-                player_names[j] = temp_name;
-            }
+    size_t length = strlen(player_name);
+    if(length > MAX_PLAYER_NAME_LENGTH){
+        return 0;
+    }
+    for(size_t i = 0 ; i < length ; i++){
+        if(isspace((unsigned char)player_name[i])){
+            return 0;
         }
-    } 
+    }
+    return 1;
 }
 
-static int push_score(long int score, long int existing_scores[10]){
-    int push_back_index = 9;
-    for(int i = 0 ; i < 10 ; i++){
-        if(existing_scores[i] == -1){
-            push_back_index = i;
-        }
+static LabyrinthStatus parse_score_line(char* line, char* player_name, long int* score){
+    char* cursor = line;
+    while(isspace((unsigned char)*cursor)){
+        cursor++;
     }
 
-    for(int i = 0 ; i < 10 ; i++){
-        if(existing_scores[i] == -1){
-            existing_scores[i] = score;
-            return i;
-        }
-        if(score > existing_scores[i]){
-            for(int j = push_back_index ; j > i ; j--){
-                existing_scores[j] = existing_scores[j-1];
+    char* name_start = cursor;
+    while(*cursor != '\0' && !isspace((unsigned char)*cursor)){
+        cursor++;
+    }
+    size_t name_length = (size_t)(cursor - name_start);
+    if(name_length == 0 || name_length > MAX_PLAYER_NAME_LENGTH){
+        return LABYRINTH_INVALID_FORMAT;
+    }
+    memcpy(player_name, name_start, name_length);
+    player_name[name_length] = '\0';
+
+    while(isspace((unsigned char)*cursor)){
+        cursor++;
+    }
+    if(*cursor == '\0'){
+        return LABYRINTH_INVALID_FORMAT;
+    }
+
+    errno = 0;
+    char* end_ptr;
+    long int parsed_score = strtol(cursor, &end_ptr, 10);
+    if(cursor == end_ptr || errno == ERANGE || parsed_score <= 0){
+        return LABYRINTH_INVALID_FORMAT;
+    }
+    while(isspace((unsigned char)*end_ptr)){
+        end_ptr++;
+    }
+    if(*end_ptr != '\0'){
+        return LABYRINTH_INVALID_FORMAT;
+    }
+
+    *score = parsed_score;
+    return LABYRINTH_SUCCESS;
+}
+
+static void sort_scores_array(
+    long int scores[MAX_SCORES],
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1]
+){
+    for(int i = 0 ; i < MAX_SCORES - 1 ; i++){
+        for(int j = 0 ; j < MAX_SCORES - i - 1 ; j++){
+            if(scores[j] < scores[j + 1]){
+                long int temp_score = scores[j];
+                scores[j] = scores[j + 1];
+                scores[j + 1] = temp_score;
+
+                char temp_name[MAX_PLAYER_NAME_LENGTH + 1];
+                memcpy(temp_name, player_names[j], sizeof(temp_name));
+                memcpy(player_names[j], player_names[j + 1], sizeof(temp_name));
+                memcpy(player_names[j + 1], temp_name, sizeof(temp_name));
             }
-            existing_scores[i] = score;
-            return i;
         }
     }
+}
 
-    return -1;
+static int push_score(
+    long int score,
+    long int scores[MAX_SCORES],
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1],
+    const char* player_name
+){
+    int count = 0;
+    while(count < MAX_SCORES && scores[count] != -1){
+        count++;
+    }
+    if(count == MAX_SCORES && score <= scores[MAX_SCORES - 1]){
+        return -1;
+    }
+
+    int index = 0;
+    while(index < count && score <= scores[index]){
+        index++;
+    }
+    int last_index = count < MAX_SCORES ? count : MAX_SCORES - 1;
+    for(int i = last_index ; i > index ; i--){
+        scores[i] = scores[i - 1];
+        memcpy(player_names[i], player_names[i - 1], MAX_PLAYER_NAME_LENGTH + 1);
+    }
+    scores[index] = score;
+    strcpy(player_names[index], player_name);
+    return index;
 }
