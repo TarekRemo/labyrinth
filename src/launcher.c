@@ -261,14 +261,14 @@ static void play(){
     }
     
     //Temps écoulé depuis le début de la partie
-    static long int elapsed_time;
+    static long int nb_mvmts;
 
     if(current_game_status == NOT_STARTED){ //réinitialisation en début de partie
-        elapsed_time = 0;
+        nb_mvmts = 0;
         score = 0;
     }
 
-    current_game_status = launch_game(loaded_labyrinth, &elapsed_time, &score);
+    current_game_status = launch_game(loaded_labyrinth, &nb_mvmts, &score);
 }
 
 static void create_labyrinth(){

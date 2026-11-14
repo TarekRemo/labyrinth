@@ -36,7 +36,7 @@ static void find_player_coordinates(Labyrinth labyrinth, int coordinates[2]);
  */
 static int player_can_go_to(Labyrinth* labyrinth, int new_line, int new_col);
 
-GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* current_score){
+GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* current_score){
     if(labyrinth == NULL ||labyrinth->cells == NULL){
         return NOT_STARTED;
     }
@@ -55,7 +55,6 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* c
     int new_player_line;
     int new_player_col;
 
-    int start_time = time(NULL);
     while(1){
         print_labyrinth(*labyrinth, *current_score);
  
@@ -86,8 +85,6 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* c
                 break;
             
             case R:
-                //arrêter le chrono
-                *elapsed_time += time(NULL)-start_time;
                 return NOT_FINISHED;
 
             default:
@@ -95,18 +92,17 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* c
         }
 
         if(player_can_go_to(labyrinth, new_player_line, new_player_col) == 1){
+            (*nb_mvmts)++;
             labyrinth->cells[player_line][player_col] = EMPTY;
 
             switch(labyrinth->cells[new_player_line][new_player_col]){
                 case DOOR:
-                    *elapsed_time += time(NULL)-start_time;
-                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_SEC * (*elapsed_time));
+                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_MVMT * (*nb_mvmts));
                     return WON;
                 
                 case KEY:
-                    *elapsed_time += time(NULL)-start_time;
                     labyrinth->door_unlocked = 1;
-                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_SEC * (*elapsed_time));
+                    *current_score += max(0, GAME_MAX_SCORE - GAME_PENALTY_PER_MVMT * (*nb_mvmts));
                     break;
 
                 case TREASURE:

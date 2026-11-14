@@ -12,7 +12,7 @@
 #define GAME_TRAP_COLOR RED
 
 #define GAME_MAX_SCORE 500
-#define GAME_PENALTY_PER_SEC 2
+#define GAME_PENALTY_PER_MVMT 3
 #define GAME_TRAP_PENALTY 75
 #define GAME_TREASURE_BONUS 50
 
@@ -26,11 +26,11 @@ typedef enum GAMESTATUS{
  * Lance une partie.
  * 
  * @param labyrinth le labyrinthe à lancer.
- * @param elapsed_time le temps écoulé depuis le début de la prtie
+ * @param nb_mvmts le nombre de déplacements faits depuis le début de la prtie
  * @param current_score score actuel
  * 
  * @return l'état de la partie (NOT_STARTED, NOT_FINISHED, WON)
  */
-GAMESTATUS launch_game(Labyrinth* labyrinth, long int* elapsed_time, long int* current_score);
+GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* current_score);
 
 #endif
