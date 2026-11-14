@@ -43,6 +43,15 @@ static int all_cells_linked(int** cells_values, int labyrinth_height, int labyri
  */
 static void add_random_objects(Labyrinth* labyrinth);
 
+/**
+ * Supprime quelques murs de façon aléatoire
+ * 
+ * @param labyrinth pointeur vers le labyrinthe
+ * 
+ * @return void
+ */
+static void break_random_walls(Labyrinth* labyrinth);
+
 LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, char* name, Difficulty difficulty, int height, int width){
 
     // Vérifier s'il faut utiliser les valeurs par défaut
@@ -65,6 +74,10 @@ LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, char* name, Difficulty
     }
 
     add_random_objects(*labyrinth);
+
+    if(difficulty == HARD){
+        break_random_walls(*labyrinth);
+    }
 
     return LABYRINTH_SUCCESS;
 }
@@ -162,6 +175,41 @@ int construct_labyrinth(Labyrinth* labyrinth){
     free_cells_values(cells_values, height);
 
     return success;
+}
+
+static void break_random_walls(Labyrinth* labyrinth){
+    int height = labyrinth->height;
+    int width = labyrinth->width;
+
+    int nb_to_break = BROKEN_WALL_PERCENTAGE * (height-1) * (width-1);
+
+    while(nb_to_break > 0){
+        int random_line = rand()%height;
+        int random_width = rand()%width;
+
+        int break_wall = labyrinth->cells[random_line][random_width] == WALL &&
+                            random_line > 0 && random_width > 0 &&
+                            random_line < height -1 && random_width < width-1;
+
+        if(break_wall){
+            break_wall = break_wall &&
+                        (
+                            (
+                                labyrinth->cells[random_line-1][random_width] == EMPTY &&
+                                labyrinth->cells[random_line+1][random_width] == EMPTY
+                            ) ||
+                            (
+                                labyrinth->cells[random_line][random_width-1] == EMPTY &&
+                                labyrinth->cells[random_line+1][random_width+1] == EMPTY
+                            )
+                        );
+        }
+
+        if(break_wall){
+            labyrinth->cells[random_line][random_width] = EMPTY;
+            nb_to_break--;
+        }
+    }
 }
 
 static void free_cells_values(int** cells_values, int labyrinth_height){
