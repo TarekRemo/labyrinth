@@ -2,7 +2,11 @@
 #include <string.h>
 #include "labyrinth.h"
 
-Labyrinth* allocate_labyrinth(int difficulty, int height, int width){
+Labyrinth* allocate_labyrinth(char name[MAX_LABYRINTH_NAME_LENGTH+1], int difficulty, int height, int width){
+    if(!is_valid_labyrinth_name(name)){
+        return NULL;
+    }
+
     Labyrinth* labyrinth = malloc(sizeof(Labyrinth));
     if(labyrinth == NULL){
         return NULL;
@@ -31,6 +35,7 @@ Labyrinth* allocate_labyrinth(int difficulty, int height, int width){
         }
     }
 
+    strcpy(labyrinth->name, name);
     labyrinth->height = height;
     labyrinth->width = width;
     labyrinth->difficulty = difficulty;

@@ -113,6 +113,24 @@ KeyboardKey read_entry(){
     return NONE;
 }
 
+int read_string(char* name, int size){
+    if(name == NULL){
+        return 0;
+    }
+
+    char* name_end;
+    while(
+        fgets(name, size+1, stdin) == NULL ||
+        (name_end = strchr(name, '\n')) == NULL
+    ){
+        char c;
+        while((c = getc(stdin)) != '\0' && c != '\n' && c != EOF);
+        return 0;
+    }
+    *name_end = '\0';
+    return 1;
+}
+
 LabyrinthStatus file_exists(char* folder_path, int is_folder){
     struct stat st = {0};   
     if (stat(folder_path, &st) == -1) {

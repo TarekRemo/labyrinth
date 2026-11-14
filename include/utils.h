@@ -74,6 +74,16 @@ int read_int(FILE* input_descriptor, int* var);
 KeyboardKey read_entry(void);
 
 /**
+ * Lit une chaîne de caractères depuis l'entrée standard.
+ * 
+ * @param name variable qui contiendra la chaîne de caractères lue.
+ * @param size le nombre max de caractères lu.
+ * 
+ * @return int 1 si la lecture réussie, 0 sinon
+ */
+int read_string(char* name,  int size);
+
+/**
  * Permet de vérifier si un fichier/dossier existe et est accessible.
  * 
  * @param file_path le chemin du fichier à chercher.

@@ -52,6 +52,13 @@ static void print_choices(char** choices_list, int nb_choices, int current_choic
 static void play(void);
 
 /**
+ * gére l'enregistrement du score actuel (variable globale score)
+ * 
+ * @return void
+ */
+static void handle_score_saving(void);
+
+/**
  * Demande à l'utilisateur d'entrer les informations du labyrinthe à créer
  * puis le génère, le charge en mémoire (dans loaded_labyrinth) et l'enregistre dans un fichier cfg.
  * 
@@ -269,6 +276,70 @@ static void play(){
     }
 
     current_game_status = launch_game(loaded_labyrinth, &nb_mvmts, &score);
+    if(current_game_status == WON && score > 0){ //enregistrer le score du joueur
+        handle_score_saving();
+    }
+}
+
+static void handle_score_saving(){
+    long int current_scores[MAX_SCORES];
+    char current_player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1];
+
+    LabyrinthStatus load_scores_status = load_scores(loaded_labyrinth->name, current_scores, current_player_names);
+    if(load_scores_status == LABYRINTH_SUCCESS || load_scores_status == LABYRINTH_NOT_FOUND){
+        //vérifier si le score fait partie des meilleurs scores enregistrés
+        if(load_scores_status == LABYRINTH_SUCCESS){
+            int count = 0;
+            while(count < MAX_SCORES && current_scores[count] != -1){
+                count++;
+            }
+            if(count == MAX_SCORES && score <= current_scores[MAX_SCORES - 1]){
+                return; //le score ne fait pas partie des meilleurs scores
+            }
+        }
+        
+        set_background_color(MENU_BACKGROUND_COLOR);
+
+        char name[MAX_PLAYER_NAME_LENGTH+1];
+        char display_msg[300];
+        sprintf(display_msg, "Bravo! Votre score fait partie des %d meilleurs scores.\nEntrer votre nom pour l'enregistrer:", MAX_SCORES);
+        print_text(
+            display_msg,
+            MENU_CHOICE_COLOR,
+            0,
+            MENU_BACKGROUND_COLOR,
+            1,
+            1
+        );
+
+        set_canonical_mode(1);
+        while((read_string(name, sizeof(name))) == 0 || !is_valid_player_name(name)){
+            sprintf(display_msg, "Veulliez entrer un nom qui fait moins de %d caractères et ne contient pas d'espaces", MAX_PLAYER_NAME_LENGTH);
+            print_text(
+                display_msg,
+                MENU_ERROR_TEXT_COLOR,
+                0,
+                MENU_BACKGROUND_COLOR,
+                1,
+                1
+            );
+        }
+        set_canonical_mode(0);
+
+        LabyrinthStatus save_score_status = save_score(loaded_labyrinth->name, name, score);
+        if(save_score_status == LABYRINTH_SUCCESS){
+            success_msg = "Votre score a bien été enregistré !";
+        }
+        else if(save_score_status == LABYRINTH_NO_CHANGE){
+            error_msg = "Le fichier des scores n'a pas été modifié: Votre score existait déjà";
+        }
+        else{
+            error_msg = "Echec de l'enregistrement du score";
+        }
+    }
+    else{
+        error_msg = "Echec de l'enregistrement du score: Impossible de lire le fichier des scores de ce labyrinthe";
+    }
 }
 
 static void create_labyrinth(){
@@ -281,7 +352,7 @@ static void create_labyrinth(){
     set_background_color(MENU_BACKGROUND_COLOR);
     set_canonical_mode(1);
 
-    char name[MAX_LABYRINTH_NAME_LENGTH];
+    char name[MAX_LABYRINTH_NAME_LENGTH+1];
     print_text(
         "Entrer le nom du labyrinthe à créer",
         MENU_CHOICE_COLOR,
@@ -290,24 +361,18 @@ static void create_labyrinth(){
         1,
         1
     );
-    
-    char* name_end;
-    while(
-        fgets(name, sizeof(name), stdin) == NULL ||
-        (name_end = strchr(name, '\n')) == NULL
-    ){
+    while((read_string(name, sizeof(name))) == 0 || !is_valid_labyrinth_name(name)){
+        char name_error_msg[250];
+        sprintf(name_error_msg, "Veulliez entrer un nom valide qui fait moins de %d caractères", MAX_LABYRINTH_NAME_LENGTH);
         print_text(
-            "Veulliez entrer un nom qui fait moins de 150 caractères",
+            name_error_msg,
             MENU_ERROR_TEXT_COLOR,
             0,
             MENU_BACKGROUND_COLOR,
             1,
             1
         );
-        char c;
-        while((c = getc(stdin)) != '\0' && c != '\n' && c != EOF);
-    }
-    *name_end = '\0';
+    }    
     
     set_background_color(MENU_BACKGROUND_COLOR);
 
@@ -324,7 +389,9 @@ static void create_labyrinth(){
 
     while(
         read_int(stdin, &height) == 0 ||
-        read_int(stdin, &width) == 0
+        read_int(stdin, &width) == 0 ||
+        height%2 == 0 ||
+        width%2 == 0
     ){
         set_background_color(MENU_BACKGROUND_COLOR);
         print_text(
@@ -339,7 +406,7 @@ static void create_labyrinth(){
 
     difficulty = read_labyrinth_difficulty();
 
-    LabyrinthStatus generate_status = generate_labyrinth(&loaded_labyrinth, difficulty, height, width);
+    LabyrinthStatus generate_status = generate_labyrinth(&loaded_labyrinth, name, difficulty, height, width);
     switch(generate_status){
         case LABYRINTH_SUCCESS: 
             break;

@@ -7,16 +7,6 @@
 #include "utils.h"
 
 /**
- * Vérifie qu'un nom de joueur est non vide, ne dépasse pas la longueur maximale
- * et ne contient aucun espace.
- *
- * @param player_name le nom à vérifier.
- *
- * @return 1 si le nom est valide, 0 sinon.
- */
-static int is_valid_player_name(const char* player_name);
-
-/**
  * Analyse une ligne de score et extrait le nom du joueur et son score.
  *
  * @param line la ligne contenant un nom suivi d'un score positif.
@@ -143,19 +133,17 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
         return LABYRINTH_INVALID_NAME;
     }
 
-    char* file_path = malloc(strlen(LABYRINTHS_SAVE_PATH) + strlen(name) + 5);
+    char file_path[strlen(LABYRINTHS_SAVE_PATH) + strlen(name) + 5];
     strcpy(file_path, LABYRINTHS_SAVE_PATH); 
     strcat(file_path, name);
     strcat(file_path, ".cfg");
 
     LabyrinthStatus file_exists_status = file_exists(file_path, 0);
     if(file_exists_status != LABYRINTH_SUCCESS){
-        free(file_path);
         return file_exists_status;
     }
 
     FILE* save_file = fopen(file_path, "r");
-    free(file_path); //on n'en a plus besoin
     if(save_file == NULL){
         fclose(save_file);
         return LABYRINTH_UNKNOWN;
@@ -166,6 +154,13 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
     if(fgets(name_line, sizeof(name_line), save_file) == NULL){
         fclose(save_file);
         return LABYRINTH_INVALID_FORMAT;
+    }
+
+    //vérifier que le nom dans le fichier correspond au nom du fichier
+    name_line[strcspn(name_line, "\r\n")] = '\0';
+    if(strcmp(name_line, name) != 0){
+        fclose(save_file);
+        return LABYRINTH_INVALID_NAME;
     }
 
     int difficulty, height, width;
@@ -183,7 +178,7 @@ LabyrinthStatus load_labyrinth(char* name, Labyrinth** labyrinth){
         return LABYRINTH_CORRUPTED;
     }
 
-    *labyrinth = allocate_labyrinth(difficulty, height, width);
+    *labyrinth = allocate_labyrinth(name_line, difficulty, height, width);
     if(*labyrinth == NULL){
         fclose(save_file);
         return LABYRINTH_MEMORY_ERROR;
@@ -362,18 +357,18 @@ char* build_save_file_path(char* labyrinth_name, int save_type){
         return NULL;
     }
 
-    char* file_path = malloc(strlen(save_path)+strlen(labyrinth_name)+5);
+    char* file_path = malloc(strlen(save_path)+strlen(labyrinth_name)+7);
     if(file_path == NULL){
         return NULL;
     }
     strcpy(file_path, save_path);
     strcat(file_path, labyrinth_name);
-    strcat(file_path, ".cfg");
+    strcat(file_path, save_type == 2 ? ".score" : ".cfg");
 
     return file_path;
 }
 
-static int is_valid_player_name(const char* player_name){
+int is_valid_player_name(const char* player_name){
     if(player_name == NULL || player_name[0] == '\0'){
         return 0;
     }

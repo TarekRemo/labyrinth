@@ -18,13 +18,14 @@
  * 
  * Une hauteur et une largeur minimales de 3 sont exigées.
  * 
- * @param labyrinth pointeur vers le pointeur d'un Labyrinth qui contiendra le labyrinth géneré. 
+ * @param labyrinth pointeur vers le pointeur d'un Labyrinth qui contiendra le labyrinth géneré.
+ * @param name le nom du labyrinthe 
  * @param difficulty la difficulté
  * @param height la hauteur du labyrinthe
  * @param width la largeur du labyrinthe
  * 
  * @return l'état de l'opération 
  */
-LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty, int height, int width);
+LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, char* name, Difficulty difficulty, int height, int width);
 
 #endif

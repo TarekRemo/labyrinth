@@ -43,7 +43,7 @@ static int all_cells_linked(int** cells_values, int labyrinth_height, int labyri
  */
 static void add_random_objects(Labyrinth* labyrinth);
 
-LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty, int height, int width){
+LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, char* name, Difficulty difficulty, int height, int width){
 
     // Vérifier s'il faut utiliser les valeurs par défaut
     height = height <= 0 ? DEFAULT_LABYRINTH_HEIGHT : height;
@@ -53,7 +53,7 @@ LabyrinthStatus generate_labyrinth(Labyrinth** labyrinth, Difficulty difficulty,
         return LABYRINTH_CORRUPTED;       
     }
 
-    *labyrinth  = allocate_labyrinth(difficulty, height, width);
+    *labyrinth  = allocate_labyrinth(name, difficulty, height, width);
     if(*labyrinth == NULL){
         return LABYRINTH_MEMORY_ERROR;
     }

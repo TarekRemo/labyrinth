@@ -34,6 +34,7 @@ typedef enum Difficulty {
  * @var cell** cells un tableau 2D contenant les cellules du labyrinthe             
  */
 typedef struct Labyrinth {
+    char name[MAX_LABYRINTH_NAME_LENGTH+1];
     int height;
     int width;
     Difficulty difficulty;
@@ -49,13 +50,14 @@ typedef struct Labyrinth {
  * 
  * Le champs door_unlocked du labyrinthe est mis à 0 par défaut.
  * 
+ * @param name le nom du labyrinthe
  * @param difficulty la difficulté du labyrinthe 
  * @param height la hauteur du labyrinthe 
  * @param width la largeur du labyrinthe 
  * 
  * @return un pointeur Labyrinth* si l'allocation réussie, NULL sinon.
  */
-Labyrinth* allocate_labyrinth(int difficulty, int height, int width);
+Labyrinth* allocate_labyrinth(char name[MAX_LABYRINTH_NAME_LENGTH+1], int difficulty, int height, int width);
 
 /**
  * Permet de libérer la mémoire alloué pour un labyrinthe

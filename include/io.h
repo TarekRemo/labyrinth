@@ -106,4 +106,14 @@ LabyrinthStatus load_scores(
  */
 char* build_save_file_path(char* labyrinth_name, int save_type);
 
+/**
+ * Vérifie qu'un nom de joueur est non vide, ne dépasse pas la longueur maximale
+ * et ne contient aucun espace.
+ *
+ * @param player_name le nom à vérifier.
+ *
+ * @return 1 si le nom est valide, 0 sinon.
+ */
+int is_valid_player_name(const char* player_name);
+
 #endif
