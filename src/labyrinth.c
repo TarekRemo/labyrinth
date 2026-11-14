@@ -40,6 +40,7 @@ Labyrinth* allocate_labyrinth(char name[MAX_LABYRINTH_NAME_LENGTH+1], int diffic
     labyrinth->width = width;
     labyrinth->difficulty = difficulty;
     labyrinth->door_unlocked = 0;
+    labyrinth->monster_count = 0;
 
     return labyrinth;
 }

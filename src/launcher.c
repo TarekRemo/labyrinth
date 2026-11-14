@@ -109,6 +109,15 @@ static int show_labyrinths_list(char** labyrinths_list, int nb_labyrinths);
  */
 static void quit(int exit_code);
 
+/**
+ * Place les monstres sur des cases libres du labyrinthe.
+ *
+ * @param labyrinth pointeur vers le labyrinthe
+ *
+ * @return void
+ */
+static void add_random_monsters();
+
 void launch(){
     error_msg = malloc(MAX_MENU_MSG_LENGTH);
     success_msg = malloc(MAX_MENU_MSG_LENGTH);
@@ -643,6 +652,9 @@ static void choose_labyrinth(void){
     switch(labyrinth_load_status){
         case LABYRINTH_SUCCESS:
             success_msg = "Labyrinthe chargé avec succès";
+            if(loaded_labyrinth->difficulty == HARD){
+                add_random_monsters();
+            }
             break;
 
         case LABYRINTH_MEMORY_ERROR:
@@ -750,5 +762,47 @@ static void print_choices(char** choices_list, int nb_choices, int current_choic
             1
         );
     }  
+}
+
+static void add_random_monsters(){
+    int available_count = 0;
+    for(int line = 0 ; line < loaded_labyrinth->height ; line++){
+        for(int col = 0 ; col < loaded_labyrinth->width ; col++){
+            if(loaded_labyrinth->cells[line][col] == EMPTY){
+                available_count++;
+            }
+        }
+    }
+    loaded_labyrinth->monster_count = available_count < MAX_MONSTERS ? available_count : MAX_MONSTERS;
+
+    for(int i = 0 ; i < loaded_labyrinth->monster_count ; i++){
+        while(1){
+            int random_line = rand() % loaded_labyrinth->height;
+            int random_col = rand() % loaded_labyrinth->width;
+
+            if(loaded_labyrinth->cells[random_line][random_col] != EMPTY){
+                continue;
+            }
+
+            int already_used = 0;
+            for(int monster_index = 0 ; monster_index < i ; monster_index++){
+                if(loaded_labyrinth->monsters[monster_index].line == random_line &&
+                    loaded_labyrinth->monsters[monster_index].col == random_col){
+                    already_used = 1;
+                    break;
+                }
+            }
+            if(already_used){
+                continue;
+            }
+
+            loaded_labyrinth->monsters[i].line = random_line;
+            loaded_labyrinth->monsters[i].col = random_col;
+            loaded_labyrinth->monsters[i].penalty_points = i == 0 ? 3 : 5;
+            loaded_labyrinth->monsters[i].representation = i == 0 ? 'F' : 'G';
+            loaded_labyrinth->monsters[i].mobility = i == 0 ? move_ghost : move_ogre;
+            break;
+        }
+    }
 }
 

@@ -2,6 +2,7 @@
 #define LABYRINTH_H "labyrinth.h"
 
 #define MAX_LABYRINTH_NAME_LENGTH 50
+#define MAX_MONSTERS 2
 
 /**
  * Enum permettant de représenter une cellule du labyrinth
@@ -26,21 +27,44 @@ typedef enum Difficulty {
     HARD
 } Difficulty;
 
+typedef struct Labyrinth Labyrinth;
+typedef struct Monster Monster;
+
+/**
+ * Fonction définissant le déplacement d'un monstre.
+ */
+typedef void (*MonsterMobility)(Labyrinth* labyrinth, Monster* monster);
+
+/**
+ * Structure représentant un monstre et ses paramètres de mobilité.
+ */
+struct Monster {
+    int line;
+    int col;
+    int penalty_points;
+    char representation;
+    MonsterMobility mobility;
+};
+
 /**
  * Structure représentant un labyrinthe
  * @var int height la hauteur du labyrinthe
  * @var int width la largeur du labyrinthe
  * @var Difficulty la difficulté du labyrinthe
  * @var cell** cells un tableau 2D contenant les cellules du labyrinthe             
+ * @var Monster monsters les monstres générés avec le labyrinthe
+ * @var int monster_count le nombre de monstres présents
  */
-typedef struct Labyrinth {
+struct Labyrinth {
     char name[MAX_LABYRINTH_NAME_LENGTH+1];
     int height;
     int width;
     Difficulty difficulty;
     Cell** cells;
     int door_unlocked;
-} Labyrinth;
+    Monster monsters[MAX_MONSTERS];
+    int monster_count;
+};
 
 /**
  * Initialise et retourne un pointeur vers un labyrinthe. 
