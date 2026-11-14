@@ -20,6 +20,7 @@ typedef enum MenuChoice {
     PLAY,
     CREATE_LABYRINTH,
     LOAD_LABYRINTH,
+    VIEW_SCORES,
     QUIT,
     RETURN
 } MenuChoice;

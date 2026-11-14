@@ -59,6 +59,13 @@ static void play(void);
 static void handle_score_saving(void);
 
 /**
+ * Affiche les meilleurs scores du labyrinthe chargé en mémoire.
+ *
+ * @return void
+ */
+static void show_high_scores(void);
+
+/**
  * Demande à l'utilisateur d'entrer les informations du labyrinthe à créer
  * puis le génère, le charge en mémoire (dans loaded_labyrinth) et l'enregistre dans un fichier cfg.
  * 
@@ -127,6 +134,10 @@ void launch(){
             case LOAD_LABYRINTH:
                 choose_labyrinth();
                 break;
+
+            case VIEW_SCORES:
+                show_high_scores();
+                break;
             
             case QUIT:
                 quit(0);
@@ -139,30 +150,44 @@ void launch(){
 
 MenuChoice show_menu(void){
     set_canonical_mode(0);
-    
-    char menu_choices[4][32] = {
-        "Jouer",
-        "Créer un labyrinthe",
-        "Charger un labyrinth",
-        "Quitter"
-    };
-    char* menu_choice_ptrs[4] = {
-        menu_choices[0],
-        menu_choices[1],
-        menu_choices[2],
-        menu_choices[3]
-    };
 
-    if(current_game_status == NOT_FINISHED){
-        strcpy(menu_choices[0], "Reprendre");
-    }
-    else if(current_game_status == WON){
+    if(current_game_status == WON){
         free_labyrinth(loaded_labyrinth);
         loaded_labyrinth = NULL;
     }
 
     int labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
-    MenuChoice current_choice = labyrinth_is_loaded ? PLAY : CREATE_LABYRINTH;
+
+    int scores_available = 0;
+    if(labyrinth_is_loaded){
+        long int scores[MAX_SCORES];
+        char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1];
+        LabyrinthStatus scores_status = load_scores(loaded_labyrinth->name, scores, player_names);
+        if(scores_status == LABYRINTH_SUCCESS){
+            scores_available = scores[0] != -1;
+        }
+        else if(scores_status != LABYRINTH_NOT_FOUND){
+            error_msg = "Impossible de lire les meilleurs scores de ce labyrinthe";
+        }
+    }
+
+    char* menu_choices[5];
+    MenuChoice menu_choice_values[5];
+    int nb_choices = 0;
+    menu_choices[nb_choices] = current_game_status == NOT_FINISHED ? "Reprendre" : "Jouer";
+    menu_choice_values[nb_choices++] = PLAY;
+    menu_choices[nb_choices] = "Créer un labyrinthe";
+    menu_choice_values[nb_choices++] = CREATE_LABYRINTH;
+    menu_choices[nb_choices] = "Charger un labyrinthe";
+    menu_choice_values[nb_choices++] = LOAD_LABYRINTH;
+    if(scores_available){
+        menu_choices[nb_choices] = "Voir les meilleurs scores de ce labyrinthe";
+        menu_choice_values[nb_choices++] = VIEW_SCORES;
+    }
+    menu_choices[nb_choices] = "Quitter";
+    menu_choice_values[nb_choices++] = QUIT;
+
+    int current_choice = labyrinth_is_loaded ? 0 : 1;
     int disabled_choices[] = {0};
 
     KeyboardKey key;
@@ -217,7 +242,7 @@ MenuChoice show_menu(void){
         }
 
         labyrinth_is_loaded = loaded_labyrinth != NULL ? 1 : 0;
-        print_choices(menu_choice_ptrs, 4, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
+        print_choices(menu_choices, nb_choices, current_choice, labyrinth_is_loaded ? 0 : 1, labyrinth_is_loaded ? NULL : disabled_choices);
 
         //On attend une entrée reconnue
         while(
@@ -232,25 +257,27 @@ MenuChoice show_menu(void){
             case Z:
             case S:
                 modifier = (key == UP || key == Z) ? -1 : 1;
-                if(current_choice == PLAY && modifier == -1){
-                    current_choice = QUIT;
+                current_choice += modifier;
+                if(current_choice >= nb_choices){
+                    current_choice = 0;
                 }
-                else if(current_choice == QUIT && modifier == 1){
-                    current_choice = PLAY;
+                else if(current_choice < 0){
+                    current_choice = nb_choices - 1;
                 }
-                else{
+                while(!labyrinth_is_loaded && menu_choice_values[current_choice] == PLAY){
                     current_choice += modifier;
-                }
-
-                //Impossible de jouer si aucun labyrinthe n'est chargé
-                if(loaded_labyrinth == NULL && current_choice == PLAY){
-                    current_choice = CREATE_LABYRINTH;
+                    if(current_choice >= nb_choices){
+                        current_choice = 0;
+                    }
+                    else if(current_choice < 0){
+                        current_choice = nb_choices - 1;
+                    }
                 }
                 continue;
 
             case ENTER:
                 set_background_color(MENU_BACKGROUND_COLOR);
-                return current_choice;
+                return menu_choice_values[current_choice];
 
             case R:
                 return RETURN;
@@ -340,6 +367,31 @@ static void handle_score_saving(){
     else{
         error_msg = "Echec de l'enregistrement du score: Impossible de lire le fichier des scores de ce labyrinthe";
     }
+}
+
+static void show_high_scores(){
+    long int scores[MAX_SCORES];
+    char player_names[MAX_SCORES][MAX_PLAYER_NAME_LENGTH + 1];
+    LabyrinthStatus status = load_scores(loaded_labyrinth->name, scores, player_names);
+    if(status != LABYRINTH_SUCCESS){
+        error_msg = "Impossible de lire les meilleurs scores de ce labyrinthe";
+        return;
+    }
+
+    set_background_color(MENU_BACKGROUND_COLOR);
+    char title[MAX_LABYRINTH_NAME_LENGTH + 40];
+    sprintf(title, "Meilleurs scores du labyrinthe %s", loaded_labyrinth->name);
+    print_text(title, MENU_CHOICE_COLOR, 0, MENU_BACKGROUND_COLOR, 1, 1);
+
+    for(int i = 0 ; i < MAX_SCORES && scores[i] != -1 ; i++){
+        char score_line[MAX_PLAYER_NAME_LENGTH + 40];
+        sprintf(score_line, "%d. %s - %ld", i + 1, player_names[i], scores[i]);
+        print_text(score_line, MENU_CHOICE_COLOR, 0, MENU_BACKGROUND_COLOR, 0, 1);
+    }
+
+    print_text("Appuyez sur R pour revenir au menu", MENU_CHOICE_COLOR, 0, MENU_BACKGROUND_COLOR, 0, 1);
+    KeyboardKey input;
+    while((input = read_entry()) != R);
 }
 
 static void create_labyrinth(){
