@@ -1,31 +1,30 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+/**
+ * Tests unitaires du projet, écrits avec minunit (https://github.com/siu/minunit).
+ *
+ * minunit.h garde ses compteurs dans des variables static : toutes les suites sont donc
+ * incluses ici pour être compilées dans un seul fichier. minunit.h doit rester le premier
+ * #include (il définit _POSIX_C_SOURCE avant les en-têtes système).
+ */
 #include "minunit.h"
 
-int mu_tests_run = 0;
-int mu_tests_failed = 0;
+#include <stdlib.h>
+#include <time.h>
 
-void run_labyrinth_tests(void);
-void run_generator_tests(void);
-void run_monster_tests(void);
-void run_utils_tests(void);
-void run_io_tests(void);
+#include "test_labyrinth.h"
+#include "test_generator.h"
+#include "test_monster.h"
+#include "test_utils.h"
+#include "test_io.h"
 
 int main(void){
     srand(time(NULL));
 
-    printf("== labyrinth ==\n");
-    run_labyrinth_tests();
-    printf("== generator ==\n");
-    run_generator_tests();
-    printf("== monster ==\n");
-    run_monster_tests();
-    printf("== utils ==\n");
-    run_utils_tests();
-    printf("== io ==\n");
-    run_io_tests();
+    MU_RUN_SUITE(labyrinth_suite);
+    MU_RUN_SUITE(generator_suite);
+    MU_RUN_SUITE(monster_suite);
+    MU_RUN_SUITE(utils_suite);
+    MU_RUN_SUITE(io_suite);
+    MU_REPORT();
 
-    printf("\n%d test(s) exécuté(s), %d échec(s)\n", mu_tests_run, mu_tests_failed);
-    return mu_tests_failed == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    return MU_EXIT_CODE;
 }

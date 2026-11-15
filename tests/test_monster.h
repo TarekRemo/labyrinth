@@ -29,26 +29,25 @@ static Labyrinth* build_labyrinth_with_one_monster(const char** map, int height,
     return labyrinth;
 }
 
-static const char* test_add_monsters_too_small(void){
+MU_TEST(test_add_monsters_too_small){
     Labyrinth* labyrinth = NULL;
     char name[] = "petit";
-    mu_assert("génération impossible", generate_labyrinth(&labyrinth, name, EASY, 5, 5) == LABYRINTH_SUCCESS);
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 5, 5) == LABYRINTH_SUCCESS, "génération impossible");
 
     LabyrinthStatus status = add_random_monsters(labyrinth);
     int count = labyrinth->monster_count;
     free_labyrinth(labyrinth);
 
-    mu_assert("un petit labyrinthe ne doit pas avoir de monstres", status == LABYRINTH_NO_CHANGE && count == 0);
-    return NULL;
+    mu_assert(status == LABYRINTH_NO_CHANGE && count == 0, "un petit labyrinthe ne doit pas avoir de monstres");
 }
 
-static const char* test_add_monsters(void){
+MU_TEST(test_add_monsters){
     Labyrinth* labyrinth = NULL;
     char name[] = "grand";
-    mu_assert("génération impossible", generate_labyrinth(&labyrinth, name, EASY, 11, 25) == LABYRINTH_SUCCESS);
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 11, 25) == LABYRINTH_SUCCESS, "génération impossible");
 
-    mu_assert("l'ajout des monstres doit réussir", add_random_monsters(labyrinth) == LABYRINTH_SUCCESS);
-    mu_assert("il doit y avoir des monstres", labyrinth->monster_count > 0 && labyrinth->monsters != NULL);
+    mu_assert(add_random_monsters(labyrinth) == LABYRINTH_SUCCESS, "l'ajout des monstres doit réussir");
+    mu_assert(labyrinth->monster_count > 0 && labyrinth->monsters != NULL, "il doit y avoir des monstres");
 
     int valid = 1;
     int ghosts = 0;
@@ -73,12 +72,11 @@ static const char* test_add_monsters(void){
     int count = labyrinth->monster_count;
     free_labyrinth(labyrinth);
 
-    mu_assert("les monstres doivent être sur des cases vides, toutes différentes, et avoir un déplacement", valid);
-    mu_assert("il doit y avoir des fantômes et des ogres", ghosts > 0 && ogres > 0 && ghosts + ogres == count);
-    return NULL;
+    mu_assert(valid, "les monstres doivent être sur des cases vides, toutes différentes, et avoir un déplacement");
+    mu_assert(ghosts > 0 && ogres > 0 && ghosts + ogres == count, "il doit y avoir des fantômes et des ogres");
 }
 
-static const char* test_ghost_stays_in_range(void){
+MU_TEST(test_ghost_stays_in_range){
     const char* map[] = {
         "#########",
         "#.......#",
@@ -89,7 +87,7 @@ static const char* test_ghost_stays_in_range(void){
         "#########"
     };
     Labyrinth* labyrinth = build_labyrinth_with_one_monster(map, 7, 9, 3, 4, GHOST_REPRESENTATION);
-    mu_assert("allocation impossible", labyrinth != NULL);
+    mu_assert(labyrinth != NULL, "allocation impossible");
 
     Monster* ghost = &labyrinth->monsters[0];
     int valid = 1;
@@ -105,18 +103,17 @@ static const char* test_ghost_stays_in_range(void){
     }
     free_labyrinth(labyrinth);
 
-    mu_assert("le fantôme doit rester dans sa portée et ne pas entrer dans un mur", valid);
-    return NULL;
+    mu_assert(valid, "le fantôme doit rester dans sa portée et ne pas entrer dans un mur");
 }
 
-static const char* test_ghost_does_not_stack(void){
+MU_TEST(test_ghost_does_not_stack){
     const char* map[] = {
         "#####",
         "#...#",
         "#####"
     };
     Labyrinth* labyrinth = build_labyrinth_with_one_monster(map, 3, 5, 1, 1, GHOST_REPRESENTATION);
-    mu_assert("allocation impossible", labyrinth != NULL);
+    mu_assert(labyrinth != NULL, "allocation impossible");
 
     // Un deuxième monstre occupe une autre case du couloir
     labyrinth->monsters = realloc(labyrinth->monsters, 2 * sizeof(Monster));
@@ -135,18 +132,17 @@ static const char* test_ghost_does_not_stack(void){
     }
     free_labyrinth(labyrinth);
 
-    mu_assert("deux monstres ne doivent pas se retrouver sur la même case", valid);
-    return NULL;
+    mu_assert(valid, "deux monstres ne doivent pas se retrouver sur la même case");
 }
 
-static const char* test_ogre_goes_to_treasure(void){
+MU_TEST(test_ogre_goes_to_treasure){
     const char* map[] = {
         "###############",
         "#............$#",
         "###############"
     };
     Labyrinth* labyrinth = build_labyrinth_with_one_monster(map, 3, 15, 1, 1, OGRE_REPRESENTATION);
-    mu_assert("allocation impossible", labyrinth != NULL);
+    mu_assert(labyrinth != NULL, "allocation impossible");
 
     Monster* ogre = &labyrinth->monsters[0];
     for(int i = 0 ; i < 10 ; i++){
@@ -155,11 +151,10 @@ static const char* test_ogre_goes_to_treasure(void){
     int distance_to_treasure = abs(ogre->col - 13);
     free_labyrinth(labyrinth);
 
-    mu_assert("l'ogre doit s'être rapproché du trésor", distance_to_treasure <= OGRE_PATROL_RANGE);
-    return NULL;
+    mu_assert(distance_to_treasure <= OGRE_PATROL_RANGE, "l'ogre doit s'être rapproché du trésor");
 }
 
-static const char* test_ogre_patrols_back_and_forth(void){
+MU_TEST(test_ogre_patrols_back_and_forth){
     const char* map[] = {
         "###############",
         "#............$#",
@@ -167,7 +162,7 @@ static const char* test_ogre_patrols_back_and_forth(void){
     };
     // L'ogre démarre à côté du trésor
     Labyrinth* labyrinth = build_labyrinth_with_one_monster(map, 3, 15, 1, 12, OGRE_REPRESENTATION);
-    mu_assert("allocation impossible", labyrinth != NULL);
+    mu_assert(labyrinth != NULL, "allocation impossible");
 
     Monster* ogre = &labyrinth->monsters[0];
     int visited[15] = {0};
@@ -188,12 +183,11 @@ static const char* test_ogre_patrols_back_and_forth(void){
     }
     free_labyrinth(labyrinth);
 
-    mu_assert("l'ogre ne doit pas entrer dans le trésor/un mur ni s'éloigner de sa zone de ronde", valid);
-    mu_assert("l'ogre doit se déplacer entre plusieurs cases", distinct_cells >= 2);
-    return NULL;
+    mu_assert(valid, "l'ogre ne doit pas entrer dans le trésor/un mur ni s'éloigner de sa zone de ronde");
+    mu_assert(distinct_cells >= 2, "l'ogre doit se déplacer entre plusieurs cases");
 }
 
-static const char* test_ogre_without_treasure_moves(void){
+MU_TEST(test_ogre_without_treasure_moves){
     const char* map[] = {
         "#######",
         "#.....#",
@@ -201,7 +195,7 @@ static const char* test_ogre_without_treasure_moves(void){
         "#######"
     };
     Labyrinth* labyrinth = build_labyrinth_with_one_monster(map, 4, 7, 1, 1, OGRE_REPRESENTATION);
-    mu_assert("allocation impossible", labyrinth != NULL);
+    mu_assert(labyrinth != NULL, "allocation impossible");
 
     Monster* ogre = &labyrinth->monsters[0];
     int moved = 0;
@@ -219,17 +213,16 @@ static const char* test_ogre_without_treasure_moves(void){
     }
     free_labyrinth(labyrinth);
 
-    mu_assert("l'ogre doit bouger même sans trésor", moved);
-    mu_assert("l'ogre ne doit pas entrer dans un mur", valid);
-    return NULL;
+    mu_assert(moved, "l'ogre doit bouger même sans trésor");
+    mu_assert(valid, "l'ogre ne doit pas entrer dans un mur");
 }
 
-void run_monster_tests(void){
-    mu_run_test(test_add_monsters_too_small);
-    mu_run_test(test_add_monsters);
-    mu_run_test(test_ghost_stays_in_range);
-    mu_run_test(test_ghost_does_not_stack);
-    mu_run_test(test_ogre_goes_to_treasure);
-    mu_run_test(test_ogre_patrols_back_and_forth);
-    mu_run_test(test_ogre_without_treasure_moves);
+MU_TEST_SUITE(monster_suite){
+    MU_RUN_TEST(test_add_monsters_too_small);
+    MU_RUN_TEST(test_add_monsters);
+    MU_RUN_TEST(test_ghost_stays_in_range);
+    MU_RUN_TEST(test_ghost_does_not_stack);
+    MU_RUN_TEST(test_ogre_goes_to_treasure);
+    MU_RUN_TEST(test_ogre_patrols_back_and_forth);
+    MU_RUN_TEST(test_ogre_without_treasure_moves);
 }

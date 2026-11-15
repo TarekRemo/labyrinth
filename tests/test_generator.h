@@ -44,16 +44,16 @@ static int count_reachable_cells(Labyrinth* labyrinth, int start_line, int start
     return reachable;
 }
 
-static const char* test_generate_easy(void){
+MU_TEST(test_generate_easy){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_facile";
     LabyrinthStatus status = generate_labyrinth(&labyrinth, name, EASY, 11, 25);
 
-    mu_assert("la génération doit réussir", status == LABYRINTH_SUCCESS && labyrinth != NULL);
-    mu_assert("mauvaises dimensions", labyrinth->height == 11 && labyrinth->width == 25);
-    mu_assert("il doit y avoir un seul joueur", count_cells(labyrinth, PLAYER) == 1);
-    mu_assert("il doit y avoir une seule porte", count_cells(labyrinth, DOOR) == 1);
-    mu_assert("il doit y avoir une seule clé", count_cells(labyrinth, KEY) == 1);
+    mu_assert(status == LABYRINTH_SUCCESS && labyrinth != NULL, "la génération doit réussir");
+    mu_assert(labyrinth->height == 11 && labyrinth->width == 25, "mauvaises dimensions");
+    mu_assert(count_cells(labyrinth, PLAYER) == 1, "il doit y avoir un seul joueur");
+    mu_assert(count_cells(labyrinth, DOOR) == 1, "il doit y avoir une seule porte");
+    mu_assert(count_cells(labyrinth, KEY) == 1, "il doit y avoir une seule clé");
 
     int border_ok = 1;
     for(int col = 0 ; col < 25 ; col++){
@@ -62,72 +62,62 @@ static const char* test_generate_easy(void){
         }
     }
     free_labyrinth(labyrinth);
-    mu_assert("les bords ne doivent pas être des cases vides", border_ok);
-    return NULL;
+    mu_assert(border_ok, "les bords ne doivent pas être des cases vides");
 }
 
-static const char* test_generate_hard(void){
+MU_TEST(test_generate_hard){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_difficile";
     LabyrinthStatus status = generate_labyrinth(&labyrinth, name, HARD, 11, 25);
 
-    mu_assert("la génération doit réussir", status == LABYRINTH_SUCCESS && labyrinth != NULL);
-    mu_assert("mauvaise difficulté", labyrinth->difficulty == HARD);
+    mu_assert(status == LABYRINTH_SUCCESS && labyrinth != NULL, "la génération doit réussir");
+    mu_assert(labyrinth->difficulty == HARD, "mauvaise difficulté");
     free_labyrinth(labyrinth);
-    return NULL;
 }
 
-static const char* test_generate_default_size(void){
+MU_TEST(test_generate_default_size){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_defaut";
     LabyrinthStatus status = generate_labyrinth(&labyrinth, name, EASY, 0, 0);
 
-    mu_assert("la génération doit réussir", status == LABYRINTH_SUCCESS && labyrinth != NULL);
-    mu_assert("la hauteur par défaut doit être utilisée", labyrinth->height == DEFAULT_LABYRINTH_HEIGHT);
-    mu_assert("la largeur par défaut doit être utilisée", labyrinth->width == DEFAULT_LABYRINTH_WIDTH);
+    mu_assert(status == LABYRINTH_SUCCESS && labyrinth != NULL, "la génération doit réussir");
+    mu_assert(labyrinth->height == DEFAULT_LABYRINTH_HEIGHT, "la hauteur par défaut doit être utilisée");
+    mu_assert(labyrinth->width == DEFAULT_LABYRINTH_WIDTH, "la largeur par défaut doit être utilisée");
     free_labyrinth(labyrinth);
-    return NULL;
 }
 
-static const char* test_generate_invalid_params(void){
+MU_TEST(test_generate_invalid_params){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_invalide";
 
-    mu_assert("une hauteur paire doit être refusée",
-              generate_labyrinth(&labyrinth, name, EASY, 10, 25) == LABYRINTH_CORRUPTED);
-    mu_assert("une largeur trop petite doit être refusée",
-              generate_labyrinth(&labyrinth, name, EASY, 11, 1) == LABYRINTH_CORRUPTED);
-    return NULL;
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 10, 25) == LABYRINTH_CORRUPTED, "une hauteur paire doit être refusée");
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 11, 1) == LABYRINTH_CORRUPTED, "une largeur trop petite doit être refusée");
 }
 
-static const char* test_generate_invalid_name(void){
+MU_TEST(test_generate_invalid_name){
     Labyrinth* labyrinth = NULL;
     char name[] = "nom invalide";
 
-    mu_assert("un nom invalide doit être refusé",
-              generate_labyrinth(&labyrinth, name, EASY, 11, 25) != LABYRINTH_SUCCESS);
-    return NULL;
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 11, 25) != LABYRINTH_SUCCESS, "un nom invalide doit être refusé");
 }
 
-static const char* test_generate_all_cells_reachable(void){
+MU_TEST(test_generate_all_cells_reachable){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_accessible";
-    mu_assert("la génération doit réussir",
-              generate_labyrinth(&labyrinth, name, EASY, 11, 25) == LABYRINTH_SUCCESS);
+    mu_assert(generate_labyrinth(&labyrinth, name, EASY, 11, 25) == LABYRINTH_SUCCESS, "la génération doit réussir");
 
     int reachable = count_reachable_cells(labyrinth, 0, 1); // le joueur démarre en (0, 1)
     int expected = labyrinth->height * labyrinth->width - count_cells(labyrinth, WALL);
     free_labyrinth(labyrinth);
 
-    mu_assert("toutes les cases non-murs doivent être accessibles depuis le joueur", reachable == expected);
-    return NULL;
+    mu_assert(reachable == expected, "toutes les cases non-murs doivent être accessibles depuis le joueur");
 }
 
-void run_generator_tests(void){
-    mu_run_test(test_generate_easy);
-    mu_run_test(test_generate_hard);
-    mu_run_test(test_generate_default_size);
-    mu_run_test(test_generate_invalid_params);
-    mu_run_test(test_generate_invalid_name);
-    mu_run_test(test_generate_all_cells_reachable);
+MU_TEST_SUITE(generator_suite){
+    MU_RUN_TEST(test_generate_easy);
+    MU_RUN_TEST(test_generate_hard);
+    MU_RUN_TEST(test_generate_default_size);
+    MU_RUN_TEST(test_generate_invalid_params);
+    MU_RUN_TEST(test_generate_invalid_name);
+    MU_RUN_TEST(test_generate_all_cells_reachable);
 }
