@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <termio.h>
+#include <termios.h>
 #include <unistd.h>
 #include "utils.h"
 

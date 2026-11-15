@@ -9,6 +9,7 @@
 
 #define GHOST_PENALITY 3
 #define OGRE_PENALITY 5
+#define OGRE_PATROL_RANGE 2 // distance max (en cases) au trésor pour la ronde de l'ogre
 
 #define GHOST_REPRESENTATION 'F'
 #define OGRE_REPRESENTATION 'G'
@@ -36,7 +37,8 @@ LabyrinthStatus add_random_monsters(Labyrinth* labyrinth);
 void move_ghost(Labyrinth* labyrinth, Monster* monster);
 
 /**
- * Déplace un ogre dans les couloirs, en le rapprochant des trésors.
+ * Déplace un ogre dans les couloirs : il se rapproche du trésor le plus proche,
+ * puis fait des allers-retours entre les cases libres à proximité.
  *
  * @param labyrinth le labyrinthe contenant le monstre
  * @param monster l'ogre à déplacer
