@@ -62,8 +62,6 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* curre
     int new_player_col;
     int game_won;
 
-    // L'écran n'est effacé qu'une fois : les images suivantes sont dessinées par-dessus
-    // pour éviter le clignotement.
     set_background_color(GAME_BACKGROUND_COLOR);
 
     while(1){
