@@ -41,6 +41,7 @@ Labyrinth* allocate_labyrinth(char name[MAX_LABYRINTH_NAME_LENGTH+1], int diffic
     labyrinth->difficulty = difficulty;
     labyrinth->door_unlocked = 0;
     labyrinth->monster_count = 0;
+    labyrinth->monsters = NULL;
 
     return labyrinth;
 }
@@ -52,7 +53,79 @@ void free_labyrinth(Labyrinth* labyrinth){
         }
 
         free(labyrinth->cells);
+        if(labyrinth->monsters != NULL){
+            free(labyrinth->monsters);
+        }
         free(labyrinth);
+    }
+}
+
+void break_random_walls(Labyrinth* labyrinth){
+    int height = labyrinth->height;
+    int width = labyrinth->width;
+
+    int nb_to_break = BROKEN_WALL_PERCENTAGE * (height-1) * (width-1);
+
+    while(nb_to_break > 0){
+        int random_line = rand()%height;
+        int random_width = rand()%width;
+
+        int break_wall = labyrinth->cells[random_line][random_width] == WALL &&
+                            random_line > 0 && random_width > 0 &&
+                            random_line < height -1 && random_width < width-1;
+
+        if(break_wall){
+            break_wall = break_wall &&
+                        (
+                            (
+                                labyrinth->cells[random_line-1][random_width] == EMPTY &&
+                                labyrinth->cells[random_line+1][random_width] == EMPTY
+                            ) ||
+                            (
+                                labyrinth->cells[random_line][random_width-1] == EMPTY &&
+                                labyrinth->cells[random_line+1][random_width+1] == EMPTY
+                            )
+                        );
+        }
+
+        if(break_wall){
+            labyrinth->cells[random_line][random_width] = EMPTY;
+            nb_to_break--;
+        }
+    }
+}
+
+void add_random_objects(Labyrinth* labyrinth){
+    int height = labyrinth->height;
+    int width = labyrinth->width;
+
+    int random_line;
+    int random_col;
+
+    do{
+        random_line = rand()%height;
+        random_col = rand()%width;
+    }while(labyrinth->cells[random_line][random_col] != EMPTY);
+    labyrinth->cells[random_line][random_col] = KEY;
+
+    int nb_traps_to_add = (height*width)*0.03; 
+    while(nb_traps_to_add > 0){
+        do{
+            random_line = rand()%height;
+            random_col = rand()%width;
+        }while(labyrinth->cells[random_line][random_col] != EMPTY);
+        labyrinth->cells[random_line][random_col] = TRAP;
+        nb_traps_to_add--;
+    }
+
+    int nb_treasures_to_add = (height*width)*0.02; 
+    while(nb_treasures_to_add > 0){
+        do{
+            random_line = rand()%height;
+            random_col = rand()%width;
+        }while(labyrinth->cells[random_line][random_col] != EMPTY);
+        labyrinth->cells[random_line][random_col] = TREASURE;
+        nb_treasures_to_add--;
     }
 }
 

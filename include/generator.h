@@ -7,9 +7,6 @@
 #define DEFAULT_LABYRINTH_HEIGHT 11
 #define DEFAULT_LABYRINTH_WIDTH 25
 
-//Pourcentage de murs à supprimer pour le mode difficile
-#define BROKEN_WALL_PERCENTAGE 0.07
-
 /**
  * Permet de générer un labyrinthe en choisissant la difficulté, la hauteur et la largeur.
  * 

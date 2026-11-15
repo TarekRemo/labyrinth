@@ -2,7 +2,9 @@
 #define LABYRINTH_H "labyrinth.h"
 
 #define MAX_LABYRINTH_NAME_LENGTH 50
-#define MAX_MONSTERS 2
+
+//Pourcentage de murs à supprimer pour le mode difficile
+#define BROKEN_WALL_PERCENTAGE 0.07
 
 /**
  * Enum permettant de représenter une cellule du labyrinth
@@ -56,13 +58,13 @@ struct Monster {
  * @var int monster_count le nombre de monstres présents
  */
 struct Labyrinth {
-    char name[MAX_LABYRINTH_NAME_LENGTH+1];
+    char name[MAX_LABYRINTH_NAME_LENGTH+1]; 
     int height;
     int width;
     Difficulty difficulty;
     Cell** cells;
     int door_unlocked;
-    Monster monsters[MAX_MONSTERS];
+    Monster* monsters;
     int monster_count;
 };
 
@@ -91,6 +93,24 @@ Labyrinth* allocate_labyrinth(char name[MAX_LABYRINTH_NAME_LENGTH+1], int diffic
  * @return void
  */
 void free_labyrinth(Labyrinth* labyrinth);
+
+/**
+ * Supprime quelques murs de façon aléatoire
+ * 
+ * @param labyrinth pointeur vers le labyrinthe
+ * 
+ * @return void
+ */
+void break_random_walls(Labyrinth* labyrinth);
+
+/**
+ * Ajoute les objets aléatoires (clé, pièges, trésores) au labyrinthe
+ * 
+ * @param labyrinth pointeur vers le labyrinthe
+ * 
+ * @return void
+ */
+void add_random_objects(Labyrinth* labyrinth);
 
 /**
  * Permet de vérifier si les paramètres d'un labyrinthe sont valides.

@@ -33,24 +33,4 @@ typedef enum GAMESTATUS{
  */
 GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* current_score);
 
-/**
- * Déplace un fantôme dans la limite de son étendue de mobilité, sans tenir compte des murs.
- *
- * @param labyrinth le labyrinthe contenant le monstre
- * @param monster le fantôme à déplacer
- *
- * @return void
- */
-void move_ghost(Labyrinth* labyrinth, Monster* monster);
-
-/**
- * Déplace un ogre dans les couloirs, en le rapprochant des trésors.
- *
- * @param labyrinth le labyrinthe contenant le monstre
- * @param monster l'ogre à déplacer
- *
- * @return void
- */
-void move_ogre(Labyrinth* labyrinth, Monster* monster);
-
 #endif
