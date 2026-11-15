@@ -10,13 +10,21 @@
 #include "utils.h"
 
 /**
- * permet d'obtenir le code ansi de la couleur souhaitée.
- * 
- * @param color la couleur souhaitée.
- * 
- * @return la code de la couleur. Si la couleur n'est pas reconnue, alors NULL est retourné.
+ * Couleur d'arrière plan courante (définie par set_background_color), -1 si aucune.
+ * Elle est réappliquée après chaque réinitialisation du style pour que le fond
+ * reste cohérent partout (fin de ligne, saisie utilisateur, etc).
  */
-static char* get_color_ansi_code(Color color);
+static int current_background_color = -1;
+
+/**
+ * Retourne le code SGR (ANSI) d'une couleur de texte (30-37, 90-97) ou -1 si inconnue.
+ */
+static int get_text_color_code(Color color);
+
+/**
+ * Retourne le code SGR (ANSI) d'une couleur de fond (40-47, 100-107) ou -1 si inconnue.
+ */
+static int get_background_color_code(Color color);
 
 int read_int(FILE* input_descriptor, int* var){
     if(input_descriptor == NULL || var == NULL){
@@ -228,36 +236,38 @@ char** get_folder_content(char* folder_path){
 }
 
 static void print_text_formatted(char* text, Color text_color, int underline, Color highlight_color, int bold, int newline, int width){
-    char* text_color_code = get_color_ansi_code(text_color);
-    text_color_code = text_color_code != NULL ? text_color_code : "";
+    int text_color_code = get_text_color_code(text_color);
+    int highlight_color_code = get_background_color_code(highlight_color);
 
-    char* underline_code = underline == 1 ? "4" : "";
+    printf("\033[0%s%s", underline == 1 ? ";4" : "", bold == 1 ? ";1" : "");
+    if(text_color_code != -1){
+        printf(";%d", text_color_code);
+    }
+    if(highlight_color_code != -1){
+        printf(";%d", highlight_color_code);
+    }
+    printf("m%*s\033[0m", width, text);
 
-    char* highlight_color_code = get_color_ansi_code(highlight_color);
-    highlight_color_code = highlight_color_code != NULL ? highlight_color_code : "";
+    // Réapplique le fond global pour que la suite (retour à la ligne, saisie...) l'utilise
+    if(current_background_color != -1){
+        printf("\033[%dm", current_background_color);
+    }
 
-    char* bold_code = bold == 1 ? "1" : "";
-
-    fprintf(
-        stdout,
-        "\033[%s;%s;38;5;%s;48;5;%sm%*s\033[0m%s",
-        underline_code,
-        bold_code,
-        text_color_code,
-        highlight_color_code,
-        width,
-        text,
-        newline ? "\n" : ""
-    );
+    if(newline){
+        printf("\n");
+    }
 }
 
 void set_background_color(Color color){
-    const char* color_code = get_color_ansi_code(color);
-    if(color_code == NULL){
-        color_code = "0";
-    }
+    int color_code = get_background_color_code(color);
+    current_background_color = color_code;
 
-    printf("\033[H\033[2J\033[3J\033[0m\033[48;5;%sm", color_code);
+    // Le fond doit être défini AVANT l'effacement, sinon l'écran est effacé avec l'ancien fond
+    printf("\033[0m");
+    if(color_code != -1){
+        printf("\033[%dm", color_code);
+    }
+    printf("\033[H\033[2J\033[3J");
     fflush(stdout);
 }
 
@@ -291,31 +301,16 @@ long int max(long int a, long int b){
     return a > b ? a : b;
 }
 
-static char* get_color_ansi_code(Color color){
-    switch(color){
-        case GRAY:
-            return "250";
-        case GREEN:
-            return "40";
-        case PINK:
-            return "200";
-        case BLACK:
-            return "0";
-        case RED:
-            return "9";
-        case PURPLE:
-            return "165";
-        case YELLOW:
-            return "226";
-        case BLUE:
-            return "20";
-        case BROWN:
-            return "94";
-        case GRAY_GREEN:
-            return "188";
-        case DARK_GREEN:
-            return "22";
-        default:
-            return NULL;
+static int get_text_color_code(Color color){
+    if(color < BLACK || color > BRIGHT_WHITE){
+        return -1;
     }
+    return color < 8 ? 30 + color : 90 + (color - 8);
+}
+
+static int get_background_color_code(Color color){
+    if(color < BLACK || color > BRIGHT_WHITE){
+        return -1;
+    }
+    return color < 8 ? 40 + color : 100 + (color - 8);
 }

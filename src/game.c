@@ -3,6 +3,7 @@
 #include <time.h>
 #include "game.h"
 #include "utils.h"
+#include "monster.h"
 
 /**
  * Affiche le labyrinthe
@@ -60,6 +61,10 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* curre
     int new_player_line;
     int new_player_col;
     int game_won;
+
+    // L'écran n'est effacé qu'une fois : les images suivantes sont dessinées par-dessus
+    // pour éviter le clignotement.
+    set_background_color(GAME_BACKGROUND_COLOR);
 
     while(1){
         print_labyrinth(*labyrinth, *current_score);
@@ -141,7 +146,17 @@ GAMESTATUS launch_game(Labyrinth* labyrinth, long int* nb_mvmts, long int* curre
 }
 
 static void print_labyrinth(Labyrinth labyrinth, long int current_score){
-    set_background_color(GAME_BACKGROUND_COLOR);
+    // Toute l'image est écrite en une seule fois : on la prépare dans un tampon complet
+    // au lieu de laisser le terminal l'afficher ligne par ligne.
+    size_t frame_buffer_size = (size_t)labyrinth.height * labyrinth.width * 64 + 4096;
+    char* frame_buffer = malloc(frame_buffer_size);
+    fflush(stdout);
+    if(frame_buffer != NULL){
+        setvbuf(stdout, frame_buffer, _IOFBF, frame_buffer_size);
+    }
+
+    // Retour en haut à gauche sans effacer l'écran
+    printf("\033[H");
 
     int height = labyrinth.height;
     int width = labyrinth.width;
@@ -206,13 +221,27 @@ static void print_labyrinth(Labyrinth labyrinth, long int current_score){
             }
 
             int monster_found = 0;
+            int player_shares_cell = 0;
+            char monster_representation[2] = {0, 0};
+            Color monster_color = GAME_OGRE_COLOR;
             if(labyrinth.monster_count > 0 && labyrinth.monsters != NULL){
                 for(int i = 0 ; i < labyrinth.monster_count ; i++){
                     if(labyrinth.monsters[i].line == line && labyrinth.monsters[i].col == col){
-                        sprintf(cell_representation, " %c ", labyrinth.monsters[i].representation);
+                        monster_representation[0] = labyrinth.monsters[i].representation;
+                        monster_color = labyrinth.monsters[i].representation == GHOST_REPRESENTATION ? GAME_GHOST_COLOR : GAME_OGRE_COLOR;
                         cell_back_ground_color = GAME_BACKGROUND_COLOR;
-                        cell_content_color = labyrinth.monsters[i].representation == 'F' ? PURPLE : RED;
                         monster_found = 1;
+
+                        if(cell_content == PLAYER){
+                            // Joueur et monstre sur la même case : on affiche les deux (" O" puis la lettre du monstre)
+                            player_shares_cell = 1;
+                            strcpy(cell_representation, " O");
+                            cell_content_color = GAME_PLAYER_COLOR;
+                        }
+                        else{
+                            sprintf(cell_representation, " %c ", monster_representation[0]);
+                            cell_content_color = monster_color;
+                        }
                         break;
                     }
                 }
@@ -226,15 +255,28 @@ static void print_labyrinth(Labyrinth labyrinth, long int current_score){
                 1,
                 monster_found ? 1 : (cell_content == WALL || cell_content == EMPTY ? 3 : 1)
             );
+
+            if(player_shares_cell){
+                print_text_inline(monster_representation, monster_color, 0, cell_back_ground_color, 1, 1);
+            }
         }
 
         if(line == 0){
             char score_string[40];
             sprintf(score_string, "Score : %ld", current_score);
-            print_text_inline(score_string, PINK, 1, BLACK, 1, 3);
+            print_text_inline(score_string, PINK, 1, GAME_BACKGROUND_COLOR, 1, 3);
         }
 
-        printf("\n");
+        // Efface les éventuels restes de l'image précédente (ex: score plus court) avec le fond courant
+        printf("\033[K\n");
+    }
+
+    // Efface ce qui reste sous le labyrinthe puis envoie l'image complète au terminal
+    printf("\033[J");
+    fflush(stdout);
+    if(frame_buffer != NULL){
+        setvbuf(stdout, NULL, _IOLBF, 0);
+        free(frame_buffer);
     }
 }
 

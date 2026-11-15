@@ -7,20 +7,27 @@
 #define COLOR_ANSI_CODE_BUFFER_SIZE 64
 
 /**
- * Enum représentant les couleurs
+ * Enum représentant les couleurs.
+ * Les valeurs correspondent aux 16 couleurs ANSI standard (0 à 15) : le terminal les
+ * affiche avec sa propre palette (Ubuntu inclus), sans dépendre du mode 256 couleurs.
  */
 typedef enum Color{
-    GRAY,
-    GREEN,
-    PINK,
-    BLACK,
+    BLACK = 0,
     RED,
-    PURPLE,
+    GREEN,
     YELLOW,
     BLUE,
-    BROWN,
-    GRAY_GREEN,
-    DARK_GREEN
+    PURPLE,
+    CYAN,
+    WHITE,
+    GRAY,           // noir "brillant"
+    BRIGHT_RED,
+    BRIGHT_GREEN,
+    BRIGHT_YELLOW,
+    BRIGHT_BLUE,
+    PINK,           // magenta brillant
+    BRIGHT_CYAN,
+    BRIGHT_WHITE
 } Color;
 
 /**
@@ -115,6 +122,7 @@ char** get_folder_content(char* folder_path);
 
 /**
  * Permet d'effacer le contenu affiché et de changer la couleur d'arrière plan du terminal.
+ * Cette couleur est mémorisée et réappliquée après chaque texte affiché avec print_text / print_text_inline.
  * 
  * @param color la couleur souhaitée.
  * 

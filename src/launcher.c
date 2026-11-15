@@ -755,7 +755,7 @@ static void print_choices(char** choices_list, int nb_choices, int current_choic
 
         print_text(
             choices_list[i],
-            disabled ? MENU_DISABLED_CHOICE_COLOR : MENU_CHOICE_COLOR,
+            current_choice == i ? BLACK : (disabled ? MENU_DISABLED_CHOICE_COLOR : MENU_CHOICE_COLOR),
             0,
             current_choice == i ? MENU_SELECTED_CHOICE_COLOR : MENU_BACKGROUND_COLOR,
             1,
