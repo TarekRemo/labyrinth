@@ -2,6 +2,27 @@
 #include <stdio.h>
 #include "monster.h"
 
+static int monster_can_enter_cell(Labyrinth* labyrinth, Monster* monster, int line, int col){
+    if(line < 0 || line >= labyrinth->height ||
+       col < 0 || col >= labyrinth->width ||
+       labyrinth->cells[line][col] == WALL ||
+       labyrinth->cells[line][col] == TRAP ||
+       labyrinth->cells[line][col] == TREASURE ||
+       (labyrinth->cells[line][col] == DOOR)){
+        return 0;
+    }
+
+    for(int i = 0 ; i < labyrinth->monster_count ; i++){
+        if(&labyrinth->monsters[i] != monster &&
+           labyrinth->monsters[i].line == line &&
+           labyrinth->monsters[i].col == col){
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 LabyrinthStatus add_random_monsters(Labyrinth* labyrinth){
     int nb_cells = labyrinth->width * labyrinth->height;
     int nb_ghosts = (nb_cells/CELLS_PER_GHOST);
@@ -53,6 +74,8 @@ LabyrinthStatus add_random_monsters(Labyrinth* labyrinth){
             labyrinth->monsters[i].penalty_points = is_ghost ? GHOST_PENALITY : OGRE_PENALITY;
             labyrinth->monsters[i].representation = is_ghost ? GHOST_REPRESENTATION : OGRE_REPRESENTATION;
             labyrinth->monsters[i].mobility = is_ghost ? move_ghost : move_ogre;
+            labyrinth->monsters[i].patrol_treasure_line = -1;
+            labyrinth->monsters[i].patrol_treasure_col = -1;
 
             if(is_ghost){
                 nb_ghosts--;
@@ -76,21 +99,7 @@ void move_ghost(Labyrinth* labyrinth, Monster* monster){
         for(int col = 0 ; col < labyrinth->width ; col++){
             int distance = abs(line - monster->line) + abs(col - monster->col);
             if(distance > monster->penalty_points ||
-               labyrinth->cells[line][col] == WALL ||
-               (labyrinth->cells[line][col] == DOOR && labyrinth->door_unlocked == 0)){
-                continue;
-            }
-
-            int occupied = 0;
-            for(int i = 0 ; i < labyrinth->monster_count ; i++){
-                if(&labyrinth->monsters[i] != monster &&
-                   labyrinth->monsters[i].line == line &&
-                   labyrinth->monsters[i].col == col){
-                    occupied = 1;
-                    break;
-                }
-            }
-            if(occupied){
+               !monster_can_enter_cell(labyrinth, monster, line, col)){
                 continue;
             }
 
@@ -109,53 +118,75 @@ void move_ghost(Labyrinth* labyrinth, Monster* monster){
 void move_ogre(Labyrinth* labyrinth, Monster* monster){
     static const int line_offsets[] = {-1, 1, 0, 0};
     static const int col_offsets[] = {0, 0, -1, 1};
+    // Parcours horaire autour du trésor, en commençant par la case au-dessus.
+    static const int patrol_line_offsets[] = {-1, -1, 0, 1, 1, 1, 0, -1};
+    static const int patrol_col_offsets[] = {0, 1, 1, 1, 0, -1, -1, -1};
 
     for(int step = 0 ; step < monster->penalty_points ; step++){
-        int target_line = -1;
-        int target_col = -1;
-        int current_treasure_distance = labyrinth->height + labyrinth->width;
+        int target_line = monster->patrol_treasure_line;
+        int target_col = monster->patrol_treasure_col;
+        if(target_line < 0 || target_line >= labyrinth->height ||
+           target_col < 0 || target_col >= labyrinth->width ||
+           labyrinth->cells[target_line][target_col] != TREASURE){
+            target_line = -1;
+            target_col = -1;
+            int current_treasure_distance = labyrinth->height + labyrinth->width;
+
+            for(int line = 0 ; line < labyrinth->height ; line++){
+                for(int col = 0 ; col < labyrinth->width ; col++){
+                    if(labyrinth->cells[line][col] == TREASURE){
+                        int distance = abs(line - monster->line) + abs(col - monster->col);
+                        if(distance < current_treasure_distance){
+                            current_treasure_distance = distance;
+                            target_line = line;
+                            target_col = col;
+                        }
+                    }
+                }
+            }
+
+            monster->patrol_treasure_line = target_line;
+            monster->patrol_treasure_col = target_col;
+        }
+
         int selected_line = monster->line;
         int selected_col = monster->col;
         int candidate_count = 0;
 
-        for(int line = 0 ; line < labyrinth->height ; line++){
-            for(int col = 0 ; col < labyrinth->width ; col++){
-                if(labyrinth->cells[line][col] == TREASURE){
-                    int distance = abs(line - monster->line) + abs(col - monster->col);
-                    if(distance < current_treasure_distance){
-                        current_treasure_distance = distance;
-                        target_line = line;
-                        target_col = col;
-                    }
-                }
-            }
+        if(target_line == -1){
+            monster->patrol_treasure_line = -1;
+            monster->patrol_treasure_col = -1;
         }
 
-        if(target_line != -1 && current_treasure_distance <= 1){
-            break;
+        int line_distance = monster->line - target_line;
+        int col_distance = monster->col - target_col;
+        if(target_line != -1 && abs(line_distance) <= 1 && abs(col_distance) <= 1){
+            for(int direction = 0 ; direction < 8 ; direction++){
+                if(monster->line == target_line + patrol_line_offsets[direction] &&
+                   monster->col == target_col + patrol_col_offsets[direction]){
+                    int next_direction = (direction + 1) % 8;
+                    int new_line = target_line + patrol_line_offsets[next_direction];
+                    int new_col = target_col + patrol_col_offsets[next_direction];
+                    if(monster_can_enter_cell(labyrinth, monster, new_line, new_col)){
+                        monster->line = new_line;
+                        monster->col = new_col;
+                    }
+                    else{
+                        break;
+                    }
+                    break;
+                }
+            }
+            if(monster->line == selected_line && monster->col == selected_col){
+                break;
+            }
+            continue;
         }
 
         for(int direction = 0 ; direction < 4 ; direction++){
             int new_line = monster->line + line_offsets[direction];
             int new_col = monster->col + col_offsets[direction];
-            if(new_line < 0 || new_line >= labyrinth->height ||
-               new_col < 0 || new_col >= labyrinth->width ||
-               labyrinth->cells[new_line][new_col] == WALL ||
-               labyrinth->cells[new_line][new_col] == TREASURE ||
-               (labyrinth->cells[new_line][new_col] == DOOR && labyrinth->door_unlocked == 0)){
-                continue;
-            }
-
-            int occupied = 0;
-            for(int i = 0 ; i < labyrinth->monster_count ; i++){
-                if(&labyrinth->monsters[i] != monster &&
-                   labyrinth->monsters[i].line == new_line &&
-                   labyrinth->monsters[i].col == new_col){
-                    occupied = 1;
-                    break;
-                }
-            }
-            if(occupied){
+            if(!monster_can_enter_cell(labyrinth, monster, new_line, new_col)){
                 continue;
             }
 

@@ -46,6 +46,8 @@ struct Monster {
     int penalty_points;
     char representation;
     MonsterMobility mobility;
+    int patrol_treasure_line;
+    int patrol_treasure_col;
 };
 
 /**

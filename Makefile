@@ -23,6 +23,7 @@ build/io.o: include/io.h include/labyrinth.h
 build/utils.o: include/utils.h
 build/launcher.o: include/launcher.h include/labyrinth.h include/utils.h include/game.h include/generator.h include/io.h include/monster.h
 build/game.o: include/game.h include/labyrinth.h include/utils.h
+build/monster.o: include/monster.h include/labyrinth.h
 
 clean: 
 	rm -rf build/* bin/*
