@@ -66,7 +66,11 @@ void break_random_walls(Labyrinth* labyrinth){
 
     int nb_to_break = BROKEN_WALL_PERCENTAGE * (height-1) * (width-1);
 
-    while(nb_to_break > 0){
+    // Nombre d'essais limité : sur un petit labyrinthe, il peut y avoir moins de murs
+    // cassables que prévu et la boucle ne se terminerait jamais.
+    int remaining_attempts = height * width * 50;
+
+    while(nb_to_break > 0 && remaining_attempts-- > 0){
         int random_line = rand()%height;
         int random_width = rand()%width;
 
@@ -83,7 +87,7 @@ void break_random_walls(Labyrinth* labyrinth){
                             ) ||
                             (
                                 labyrinth->cells[random_line][random_width-1] == EMPTY &&
-                                labyrinth->cells[random_line+1][random_width+1] == EMPTY
+                                labyrinth->cells[random_line][random_width+1] == EMPTY
                             )
                         );
         }

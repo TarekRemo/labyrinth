@@ -86,6 +86,17 @@ MU_TEST(test_generate_default_size){
     free_labyrinth(labyrinth);
 }
 
+MU_TEST(test_generate_hard_small_terminates){
+    // Régression : la génération difficile bouclait à l'infini sur certains petits labyrinthes
+    for(int seed = 0 ; seed < 300 ; seed++){
+        srand(seed);
+        Labyrinth* labyrinth = NULL;
+        char name[] = "gen_petit_difficile";
+        mu_assert(generate_labyrinth(&labyrinth, name, HARD, 7, 7) == LABYRINTH_SUCCESS, "la génération doit réussir");
+        free_labyrinth(labyrinth);
+    }
+}
+
 MU_TEST(test_generate_invalid_params){
     Labyrinth* labyrinth = NULL;
     char name[] = "gen_invalide";
@@ -117,6 +128,7 @@ MU_TEST_SUITE(generator_suite){
     MU_RUN_TEST(test_generate_easy);
     MU_RUN_TEST(test_generate_hard);
     MU_RUN_TEST(test_generate_default_size);
+    MU_RUN_TEST(test_generate_hard_small_terminates);
     MU_RUN_TEST(test_generate_invalid_params);
     MU_RUN_TEST(test_generate_invalid_name);
     MU_RUN_TEST(test_generate_all_cells_reachable);
